@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Plan de lecture biblique structuré avec suivi de progression" />
+<meta name="theme-color" content="#b39df3" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Bible Plan" />
+<title>NWT Bible Planning</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<style>
+  :root{
+    --bg:#0f1220; --card:#161a2e; --text:#eaf0ff; --muted:#9aa8cd;
+    --accent:#b39df3; --watch:#7be495; --bar:#6cc3ff; --bar2:#9f86ff;
+    --btn-bg:#0c0f20; --border:rgba(255,255,255,.12);
+  }
+  body.light{
+    --bg:#f7f8fb; --card:#ffffff; --text:#0b1020; --muted:#5a6a8c;
+    --accent:#5a46c8; --watch:#1e9b56; --bar:#2a86ff; --bar2:#7b5aff;
+    --btn-bg:#f1f2f8; --border:rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial}
+  header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,0));backdrop-filter:blur(6px)}
+  .wrap{max-width:1100px;margin:0 auto;padding:14px}
+  h1{font-size:clamp(18px,4vw,26px);margin:.2em 0 .4em}
+  .muted{color:var(--muted)}
+  .topControls{display:flex;justify-content:space-between;align-items:center}
+  .toggles{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{background:var(--btn-bg);border:1px solid var(--border);color:var(--text);
+       padding:8px 10px;border-radius:10px;cursor:pointer}
+  .btn:hover{border-color:var(--accent); color:var(--accent)}
+  .chip{font-weight:700}
+  /* Style pour le bouton "watch" (utilisé pour le livre en cours et Notifs ON) */
+  .btn.watch{border-color:var(--watch); color:var(--watch)}
+
+  .globalProgress{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
+  .globalText{font-size:.95rem;color:var(--muted);min-width:170px}
+  .globalBar{flex:1;height:12px;border-radius:999px;background:var(--btn-bg);border:1px solid var(--border);overflow:hidden}
+  .globalFill{height:100%;width:0%;background:linear-gradient(90deg,var(--bar),var(--bar2));transition:width .25s ease}
+  .section{margin:8px 0 6px;font-weight:800;letter-spacing:.3px}
+  .gridBooks{display:grid;gap:8px;grid-template-columns:repeat(6,1fr)}
+  @media(max-width:840px){ .gridBooks{grid-template-columns:repeat(5,1fr)} }
+  @media(max-width:640px){ .gridBooks{grid-template-columns:repeat(4,1fr)} }
+  @media(max-width:480px){ .gridBooks{grid-template-columns:repeat(3,1fr)} }
+  .bookBtn{position:relative; background:var(--btn-bg);border:1px solid var(--border); color:var(--text);
+    border-radius:12px; padding:12px 0; text-align:center; cursor:pointer; font-weight:700; transition:all .15s ease;}
+  .bookBtn:hover{border-color:var(--accent); color:var(--accent)}
+  .bookBtn.watch{border-color:var(--watch); color:var(--watch)}
+  .bookBtn .watchDot{position:absolute; top:6px; right:8px; width:9px; height:9px; border-radius:50%; background:var(--watch);
+    box-shadow:0 0 0 0 rgba(30,155,86,.35); animation:pulse 2s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(30,155,86,.35)}70%{box-shadow:0 0 0 10px rgba(30,155,86,0)}100%{box-shadow:0 0 0 0 rgba(30,155,86,0)}}
+  main .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;margin-top:12px}
+  .titleRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .titleRow h2{margin:.2em 0;font-size:1.1rem}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .progressBox{display:flex;align-items:center;gap:10px;margin:8px 0 6px}
+  .progressText{font-size:.95rem;color:var(--muted);min-width:150px}
+  .progress{flex:1;height:10px;border-radius:999px;background:var(--btn-bg);border:1px solid var(--border);overflow:hidden}
+  .progressFill{height:100%;width:0%;background:var(--bar);transition:width .2s ease}
+  .gridPortions{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+  .item{display:flex;gap:8px;align-items:flex-start;background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;padding:8px; cursor:pointer;}
+  .item.done{opacity:.6}
+  input[type="checkbox"]{min-width:20px;min-height:20px;margin-top:2px}
+  .refs{font-weight:600}
+  .view{display:none}
+  .view.active{display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topControls">
+      <h1 id="title">NWT Bible Planning</h1>
+      <button id="aboutBtn" class="btn chip" aria-label="About this application">About</button>
+    </div>
+    <div class="toggles" style="margin-top:6px">
+      <button id="langToggle" class="btn chip" aria-label="Toggle language">EN</button>
+      <button id="themeToggle" class="btn chip" aria-label="Toggle theme">🌙</button>
+      <button id="exportBtn" class="btn chip" aria-label="Export progress">Exporter</button>
+      <button id="importBtn" class="btn chip" aria-label="Import progress">Importer</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" aria-label="Import file input">
+      
+      <!-- ====== DÉBUT SECTION NOTIFICATION ====== -->
+      <button id="notifToggleBtn" class="btn chip">Notifs OFF</button>
+      <!-- Ce conteneur sera affiché/masqué par JS -->
+      <div id="notifTimeContainer" style="display: none; align-items: center; gap: 8px;"> 
+        <label id="notifLabel" for="notifTime" style="font-size: 0.9rem; color: var(--muted); font-weight: 600;">Heure:</label>
+        <input type="time" id="notifTime" class="btn" style="padding: 4px 6px; background: var(--btn-bg); border: 1px solid var(--border); color: var(--text); cursor: text; line-height: 1.4;">
+      </div>
+      <!-- ====== FIN SECTION NOTIFICATION ====== -->
+
+    </div>
+    <div id="subline" class="muted">Click a portion to open the chapter on wol.jw.org</div>
+    <div class="globalProgress">
+      <div id="globalText" class="globalText">0/0 — 0%</div>
+      <div class="globalBar"><div id="globalFill" class="globalFill"></div></div>
+    </div>
+    
+    <!-- Advanced Statistics Panel -->
+    <div style="margin-top: 12px;">
+      <button id="statsToggle" class="btn chip" style="width: 100%;" aria-label="Toggle statistics">📊 Statistics</button>
+    </div>
+    <div id="statsPanel" style="display: none; margin-top: 10px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <div style="padding: 10px; background: var(--btn-bg); border-radius: 8px;">
+          <div id="statStreakLabel" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Current Streak</div>
+          <div id="statStreak" style="font-size: 1.3rem; font-weight: 700; color: var(--accent);">0 days</div>
+        </div>
+        <div style="padding: 10px; background: var(--btn-bg); border-radius: 8px;">
+          <div id="statTimeLeftLabel" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Estimated Time Left</div>
+          <div id="statTimeLeft" style="font-size: 1.3rem; font-weight: 700; color: var(--bar);">~0 hours</div>
+        </div>
+        <div style="padding: 10px; background: var(--btn-bg); border-radius: 8px;">
+          <div id="statBooksCompletedLabel" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Books Completed</div>
+          <div id="statBooksCompleted" style="font-size: 1.3rem; font-weight: 700; color: var(--watch);">0/66</div>
+        </div>
+        <div style="padding: 10px; background: var(--btn-bg); border-radius: 8px;">
+          <div id="statLastReadLabel" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Last Read</div>
+          <div id="statLastRead" style="font-size: 1.3rem; font-weight: 700;">Never</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="viewGrid" class="view active">
+  <div class="wrap">
+    <div id="secOT" class="section">HEBREW AND ARAMAIC SCRIPTURES</div>
+    <div id="ot" class="gridBooks"></div>
+    <div id="secNT" class="section" style="margin-top:10px">CHRISTIAN GREEK SCRIPTURES</div>
+    <div id="nt" class="gridBooks"></div>
+  </div>
+</section>
+
+<main id="viewBook" class="view">
+  <div class="wrap">
+    <div class="card">
+      <div class="titleRow">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button id="backToGrid" class="btn">⬅ Back to books</button>
+          <h2 id="bookTitle">—</h2>
+        </div>
+        <div class="controls">
+          <button id="prevBook" class="btn">← Previous book</button>
+          <button id="nextBook" class="btn">Next book →</button>
+          <button id="clearBook" class="btn">Clear checks (book)</button>
+        </div>
+      </div>
+      <div class="progressBox">
+        <div id="progressText" class="progressText">0/0 — 0%</div>
+        <div class="progress"><div id="progressFill" class="progressFill"></div></div>
+      </div>
+      <div id="grid" class="gridPortions"></div>
+    </div>
+  </div>
+</main>
+
+<div id="aboutModal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50;background:rgba(0,0,0,.45)">
+  <div id="aboutCard" style="max-width:720px;width:92%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <h3 id="aboutTitle" style="margin:0;font-size:1.05rem">About</h3>
+      <button id="aboutClose" class="btn">✕</button>
+    </div>
+    <div id="aboutBody" style="padding:14px 16px;line-height:1.6">
+      <p><strong>NWT Bible Planning</strong><br>
+      Discover a simple, motivating way to read through the entire Bible!</p>
+      <ul>
+        <li>Structured plan with balanced portions, day by day.</li>
+        <li>**Portions of about 7 minutes.**</li>
+        <li>Automatic progress tracking — per book and overall.</li>
+        <li>Bilingual French/English with official-style abbreviations.</li>
+        <li>Light or dark mode to match your style.</li>
+        <li>Direct links to jw.org for each reading.</li>
+      </ul>
+      <p>A personal tool designed to make your daily reading smoother and more inspiring.<br>
+      Created by <strong>Marc</strong> with <strong>ChatGPT</strong>, <strong>Gemini</strong> et <strong>WebIntoApp</strong>.<br>
+      📧 Contact: <a href="mailto:sammrevenn@gmail.com" style="color:#7bbdff">sammrevenn@gmail.com</a></p>
+    </div>
+    <div style="display:flex;justify-content:flex-end;padding:10px 14px;border-top:1px solid var(--border)">
+      <button id="aboutOk" class="btn">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== CONFIG / DATA ======
+// Timing constants
+const SCROLL_SAVE_DELAY = 150; // milliseconds
+const NOTIF_CHECK_INTERVAL = 30000; // 30 seconds
+const PORTION_DURATION_MINUTES = 7; // average reading time per portion
+
+const WOL_FR = "https://wol.jw.org/fr/wol/b/r30/lp-f/nwtsty/";
+const WOL_EN = "https://wol.jw.org/en/wol/b/r1/lp-e/nwtsty/";
+const BOOK_NUM = {"Genèse":1,"Exode":2,"Lévitique":3,"Nombres":4,"Deutéronome":5,"Josué":6,"Juges":7,"Ruth":8,"1 Samuel":9,"2 Samuel":10,"1 Rois":11,"2 Rois":12,"1 Chroniques":13,"2 Chroniques":14,"Esdras":15,"Néhémie":16,"Esther":17,"Job":18,"Psaumes":19,"Proverbes":20,"Ecclésiaste":21,"Chant de Salomon":22,"Isaïe":23,"Jérémie":24,"Lamentations":25,"Ézéchiel":26,"Daniel":27,"Osée":28,"Joël":29,"Amos":30,"Abdias":31,"Jonas":32,"Michée":33,"Nahum":34,"Habacuc":35,"Sophonie":36,"Aggée":37,"Zacharie":38,"Malachie":39,"Matthieu":40,"Marc":41,"Luc":42,"Jean":43,"Actes":44,"Romains":45,"1 Corinthiens":46,"2 Corinthiens":47,"Galates":48,"Éphésiens":49,"Philippiens":50,"Colossiens":51,"1 Thessaloniciens":52,"2 Thessaloniciens":53,"1 Timothée":54,"2 Timothée":55,"Tite":56,"Philémon":57,"Hébreux":58,"Jacques":59,"1 Pierre":60,"2 Pierre":61,"1 Jean":62,"2 Jean":63,"3 Jean":64,"Jude":65,"Révélation":66};
+const CANON = [["Genèse",50],["Exode",40],["Lévitique",27],["Nombres",36],["Deutéronome",34],["Josué",24],["Juges",21],["Ruth",4],["1 Samuel",31],["2 Samuel",24],["1 Rois",22],["2 Rois",25],["1 Chroniques",29],["2 Chroniques",36],["Esdras",10],["Néhémie",13],["Esther",10],["Job",42],["Psaumes",150],["Proverbes",31],["Ecclésiaste",12],["Chant de Salomon",8],["Isaïe",66],["Jérémie",52],["Lamentations",5],["Ézéchiel",48],["Daniel",12],["Osée",14],["Joël",3],["Amos",9],["Abdias",1],["Jonas",4],["Michée",7],["Nahum",3],["Habacuc",3],["Sophonie",3],["Aggée",2],["Zacharie",14],["Malachie",4],["Matthieu",28],["Marc",16],["Luc",24],["Jean",21],["Actes",28],["Romains",16],["1 Corinthiens",16],["2 Corinthiens",13],["Galates",6],["Éphésiens",6],["Philippiens",4],["Colossiens",4],["1 Thessaloniciens",5],["2 Thessaloniciens",3],["1 Timothée",6],["2 Timothée",4],["Tite",3],["Philémon",1],["Hébreux",13],["Jacques",5],["1 Pierre",5],["2 Pierre",3],["1 Jean",5],["2 Jean",1],["3 Jean",1],["Jude",1],["Révélation",22]];
+
+const ABBR_FR = {"Genèse":"Gn","Exode":"Ex","Lévitique":"Lv","Nombres":"Nb","Deutéronome":"Dt","Josué":"Jos","Juges":"Jg","Ruth":"Ru","1 Samuel":"1S","2 Samuel":"2S","1 Rois":"1R","2 Rois":"2R","1 Chroniques":"1Ch","2 Chroniques":"2Ch","Esdras":"Esd","Néhémie":"Né","Esther":"Est","Job":"Jb","Psaumes":"Ps","Proverbes":"Pr","Ecclésiaste":"Ec","Chant de Salomon":"Ct","Isaïe":"Is","Jérémie":"Jr","Lamentations":"Lm","Ézéchiel":"Éz","Daniel":"Dn","Osée":"Os","Joël":"Jl","Amos":"Am","Abdias":"Ab","Jonas":"Jon","Michée":"Mi","Nahum":"Na","Habacuc":"Hab","Sophonie":"Sph","Aggée":"Ag","Zacharie":"Za","Malachie":"Ml","Matthieu":"Mt","Marc":"Mc","Luc":"Lc","Jean":"Jean","Actes":"Ac","Romains":"Rm","1 Corinthiens":"1Co","2 Corinthiens":"2Co","Galates":"Ga","Éphésiens":"Éph","Philippiens":"Php","Colossiens":"Col","1 Thessaloniciens":"1Th","2 Thessaloniciens":"2Th","1 Timothée":"1Tm","2 Timothée":"2Tm","Tite":"Tt","Philémon":"Phm","Hébreux":"Hé","Jacques":"Jc","1 Pierre":"1P","2 Pierre":"2P","1 Jean":"1J","2 Jean":"2J","3 Jean":"3J","Jude":"Jude","Révélation":"Ré"};
+const NAME_FR = Object.fromEntries(CANON.map(([n])=>[n,n]));
+
+const ABBR_EN = {"Genèse":"Ge","Exode":"Ex","Lévitique":"Le","Nombres":"Nu","Deutéronome":"De","Josué":"Jos","Juges":"Jg","Ruth":"Ru","1 Samuel":"1Sa","2 Samuel":"2Sa","1 Rois":"1Ki","2 Rois":"2Ki","1 Chroniques":"1Ch","2 Chroniques":"2Ch","Esdras":"Ezr","Néhémie":"Ne","Esther":"Es","Job":"Job","Psaumes":"Ps","Proverbes":"Pr","Ecclésiaste":"Ec","Chant de Salomon":"Ca","Isaïe":"Isa","Jérémie":"Jer","Lamentations":"La","Ézéchiel":"Eze","Daniel":"Da","Osée":"Ho","Joël":"Joe","Amos":"Am","Abdias":"Ob","Jonas":"Jon","Michée":"Mic","Nahum":"Na","Habacuc":"Hab","Sophonie":"Zep","Aggée":"Hag","Zacharie":"Zec","Malachie":"Mal","Matthieu":"Mt","Marc":"Mr","Luc":"Lu","Jean":"Joh","Actes":"Ac","Romains":"Ro","1 Corinthiens":"1Co","2 Corinthiens":"2Co","Galates":"Ga","Éphésiens":"Eph","Philippiens":"Php","Colossiens":"Col","1 Thessaloniciens":"1Th","2 Thessaloniciens":"2Th","1 Timothée":"1Ti","2 Timothée":"2Ti","Tite":"Tit","Philémon":"Phm","Hébreux":"Heb","Jacques":"Jas","1 Pierre":"1Pe","2 Pierre":"2Pe","1 Jean":"1Jo","2 Jean":"2Jo","3 Jean":"3Jo","Jude":"Jude","Révélation":"Re"};
+const NAME_EN = {"Genèse":"Genesis","Exode":"Exodus","Lévitique":"Leviticus","Nombres":"Numbers","Deutéronome":"Deuteronomy","Josué":"Joshua","Juges":"Judges","Ruth":"Ruth","1 Samuel":"1 Samuel","2 Samuel":"2 Samuel","1 Rois":"1 Kings","2 Rois":"2 Kings","1 Chroniques":"1 Chronicles","2 Chroniques":"2 Chronicles","Esdras":"Ezra","Néhémie":"Nehemiah","Esther":"Esther","Job":"Job","Psaumes":"Psalms","Proverbes":"Proverbs","Ecclésiaste":"Ecclesiastes","Chant de Salomon":"Song of Solomon","Isaïe":"Isaiah","Jérémie":"Jeremiah","Lamentations":"Lamentations","Ézéchiel":"Ezekiel","Daniel":"Daniel","Osée":"Hosea","Joël":"Joel","Amos":"Amos","Abdias":"Obadiah","Jonas":"Jonah","Michée":"Micah","Nahum":"Nahum","Habacuc":"Habakkuk","Sophonie":"Zephaniah","Aggée":"Haggai","Zacharie":"Zechariah","Malachie":"Malachi","Matthieu":"Matthew","Marc":"Mark","Luc":"Luke","Jean":"John","Actes":"Acts","Romains":"Romans","1 Corinthians":"1 Corinthians","2 Corinthians":"2 Corinthians","Galatians":"Galatians","Éphésiens":"Ephesians","Philippiens":"Philippians","Colossiens":"Colossians","1 Thessaloniciens":"1 Thessalonians","2 Thessaloniciens":"2 Thessalonians","1 Timothée":"1 Timothy","2 Timothée":"2 Timothy","Titus":"Titus","Philémon":"Philemon","Hébreux":"Hebrews","Jacques":"James","1 Pierre":"1 Peter","2 Pierre":"2 Peter","1 Jean":"1 John","2 Jean":"2 John","3 Jean":"3 John","Jude":"Jude","Révélation":"Revelation"};
+
+const LONG_VERSES = {"Genèse 24":67,"Genèse 41":57,"Nombres 7":89,"Néhémie 7":73,"Psaumes 119":176,"Luc 1":80};
+const LONG_SPLITS = {"Genèse 24":2,"Genèse 41":2,"Nombres 7":2,"Néhémie 7":2,"Psaumes 119":4,"Luc 1":3};
+
+const UI = {
+  fr:{ title:"NWT Bible Planning", sub:"Cliquer sur une portion ouvre le chapitre correspondant sur wol.jw.org", secOT:"ÉCRITURES HÉBRAÏQUES ET ARAMÉENNES", secNT:"ÉCRITURES GRECQUES CHRÉTIENNES", back:"⬅ Retour aux livres", prev:"← Livre précédent", next:"Livre suivant →", clear:"Effacer cochés (livre)", about:"À propos", aboutOk:"OK", aboutTitle:"À propos", export:"Exporter", import:"Importer", cancel:"Annuler", aboutList1:"Plan structuré avec portions équilibrées, jour après jour.", aboutList2:"Portions d'environ 7 minutes.", aboutList3:"Suivi automatique de ta progression, par livre et global.", aboutList4:"Bilingue français/anglais avec abréviations officielles.", aboutList5:"Mode clair ou sombre selon ton style.", aboutList6:"Liens directs vers jw.org pour chaque lecture.",
+       notifOn: "Notifs ON", notifOff: "Notifs OFF", notifLabel: "Heure:", notifTitle: "NWT Bible Planning", notifBody: "C'est l'heure de votre lecture biblique quotidienne !", notifBlocked: "Les notifications sont bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.",
+       statistics: "📊 Statistiques", currentStreak: "Série actuelle", estimatedTimeLeft: "Temps restant estimé", booksCompleted: "Livres complétés", lastRead: "Dernière lecture", days: "jours", hours: "heures", never: "Jamais"
+     },
+  en:{ title:"NWT Bible Planning", sub:"Click a portion to open the chapter on wol.jw.org", secOT:"HEBREW AND ARAMAIC SCRIPTURES", secNT:"CHRISTIAN GREEK SCRIPTURES", back:"⬅ Back to books", prev:"← Previous book", next:"Next book →", clear:"Clear checks (book)", about:"About", aboutOk:"OK", aboutTitle:"About", export:"Export", import:"Import", cancel:"Cancel", aboutList1:"Structured plan with balanced portions, day by day.", aboutList2:"Portions of about 7 minutes.", aboutList3:"Automatic progress tracking — per book and overall.", aboutList4:"Bilingual French/English with official-style abbreviations.", aboutList5:"Light or dark mode to match your style.", aboutList6:"Direct links to jw.org for each reading.",
+       notifOn: "Notifs ON", notifOff: "Notifs OFF", notifLabel: "Time:", notifTitle: "NWT Bible Planning", notifBody: "It's time for your daily Bible reading!", notifBlocked: "Notifications are blocked. Please allow them in your browser settings.",
+       statistics: "📊 Statistics", currentStreak: "Current Streak", estimatedTimeLeft: "Estimated Time Left", booksCompleted: "Books Completed", lastRead: "Last Read", days: "days", hours: "hours", never: "Never"
+     }
+};
+
+function splitRange(total, parts){
+  const base = Math.floor(total/parts);
+  let rem = total % parts;
+  const out = [];
+  let start = 1;
+  for(let i=0;i<parts;i++){
+    const len = base + (rem>0?1:0); if(rem>0) rem--;
+    const end = start + len - 1;
+    out.push([start,end]); start = end+1;
+  }
+  return out;
+}
+
+const BOOK_PORTIONS = {};
+(function build(){
+  for(const [book, n] of CANON){
+    BOOK_PORTIONS[book] = [];
+    for(let ch=1; ch<=n; ch++){
+      const key = `${book} ${ch}`;
+      if(LONG_SPLITS[key]){
+        for(const [a,b] of splitRange(LONG_VERSES[key], LONG_SPLITS[key])){
+          BOOK_PORTIONS[book].push({ ch, range:`${a}-${b}` });
+        }
+      }else{
+        BOOK_PORTIONS[book].push({ ch, range:null });
+      }
+    }
+  }
+})();
+
+const DBKEY = "bible_planning_export_import_v1";
+let ACTIVE_BOOK = null;
+let DONE = new Set();
+let DATES = {}; // To store completion dates
+let POS = {};
+let LAST_IDX = {};
+let LAST_BOOK_CHECKED = null;
+let LANG = "en";
+let THEME = "dark";
+// Variables pour les notifications
+let NOTIF_ENABLED = false;
+let NOTIF_TIME = "08:00"; // Heure par défaut
+let LAST_NOTIF_DATE = null; // Pour n'envoyer qu'une notif par jour
+
+function save(){
+  try {
+    localStorage.setItem(DBKEY, JSON.stringify({
+      done:[...DONE], 
+      dates:DATES, 
+      active:ACTIVE_BOOK, 
+      pos:POS, 
+      lastIdx:LAST_IDX, 
+      lastBookChecked:LAST_BOOK_CHECKED, 
+      lang:LANG, 
+      theme:THEME,
+      // Sauvegarde des nouveaux paramètres de notification
+      notifEnabled: NOTIF_ENABLED,
+      notifTime: NOTIF_TIME,
+      lastNotifDate: LAST_NOTIF_DATE
+    }));
+  } catch(e) {
+    console.error('Save error:', e);
+    showAlertModal(LANG==="fr" ? "Erreur lors de la sauvegarde" : "Save error");
+  }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(DBKEY);
+    // If no save data exists, we'll use the defaults: EN language, dark theme.
+    if(!raw) return;
+    const d = JSON.parse(raw);
+    if(Array.isArray(d.done)) DONE = new Set(d.done);
+    DATES = d.dates || {};
+    if(d.active && CANON.find(x=>x[0]===d.active)) ACTIVE_BOOK = d.active;
+    POS = d.pos||{}; LAST_IDX = d.lastIdx||{}; LAST_BOOK_CHECKED = d.lastBookChecked||null;
+    // Load saved language and theme, otherwise keep defaults.
+    LANG = d.lang||LANG;
+    THEME = d.theme||THEME;
+    // Chargement des nouveaux paramètres de notification
+    NOTIF_ENABLED = d.notifEnabled || false;
+    NOTIF_TIME = d.notifTime || "08:00";
+    LAST_NOTIF_DATE = d.lastNotifDate || null;
+    // Mettre à jour l'affichage de l'heure
+    document.getElementById("notifTime").value = NOTIF_TIME;
+  }catch(e){ console.warn(e); }
+}
+
+function abbrFor(book){ return (LANG==="fr"?ABBR_FR[book]:ABBR_EN[book]) || (LANG==="fr"?NAME_FR[book]:NAME_EN[book]); }
+function nameFor(book){ return (LANG==="fr"?NAME_FR[book]:NAME_EN[book]) || book; }
+function wolBase(){ return LANG==="fr" ? WOL_FR : WOL_EN; }
+
+const OT_COUNT = 39;
+const BOOKS = CANON.map(([b])=>b);
+const ot = document.getElementById("ot"), nt = document.getElementById("nt");
+function buildGrid(){
+  // Use DocumentFragment for better performance
+  const otFragment = document.createDocumentFragment();
+  const ntFragment = document.createDocumentFragment();
+  
+  BOOKS.slice(0,OT_COUNT).forEach(b=> otFragment.appendChild(makeBookBtn(b)));
+  BOOKS.slice(OT_COUNT).forEach(b=> ntFragment.appendChild(makeBookBtn(b)));
+  
+  ot.innerHTML="";
+  nt.innerHTML="";
+  ot.appendChild(otFragment);
+  nt.appendChild(ntFragment);
+  updateWatchHighlight();
+}
+function makeBookBtn(book){
+  const d = document.createElement("div");
+  d.className = "bookBtn";
+  d.dataset.book = book;
+  d.textContent = abbrFor(book);
+  d.title = nameFor(book);
+  d.onclick = ()=> openBook(book);
+  return d;
+}
+
+const viewGrid = document.getElementById("viewGrid");
+const viewBook = document.getElementById("viewBook");
+function showGrid(){
+  ACTIVE_BOOK = null; save();
+  updateWatchHighlight();
+  updateProgressGlobal();
+  viewGrid.classList.add("active");
+  viewBook.classList.remove("active");
+  window.scrollTo(0,0);
+}
+function openBook(book){
+  ACTIVE_BOOK = book; save();
+  renderBook();
+  viewGrid.classList.remove("active");
+  viewBook.classList.add("active");
+  restoreScroll();
+}
+
+function renderBook(){
+  const book = ACTIVE_BOOK; if(!book) return;
+  document.getElementById("bookTitle").textContent = `${abbrFor(book)} — ${nameFor(book)}`;
+  const grid = document.getElementById("grid"); grid.innerHTML = "";
+  const base = wolBase();
+  BOOK_PORTIONS[book].forEach((obj, idx)=>{
+    const key = `${book}#${idx}`;
+    const done = DONE.has(key);
+    const date = DATES[key];
+    const div = document.createElement("div");
+    div.className = "item"+(done?" done":"");
+
+    const cb = document.createElement("input");
+    cb.type="checkbox";
+    cb.checked=done;
+    cb.onclick = (e) => {
+      e.stopPropagation();
+    };
+    cb.onchange = ()=>{
+      const dateSpan = div.querySelector('.date-span');
+      if(cb.checked){
+        DONE.add(key);
+        LAST_BOOK_CHECKED = book;
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const today = `${year}-${month}-${day}`;
+        DATES[key] = today;
+        if(dateSpan) dateSpan.textContent = today;
+      } else {
+        DONE.delete(key);
+        delete DATES[key];
+        if(dateSpan) dateSpan.textContent = '';
+      }
+      LAST_IDX[book] = idx; save(); div.classList.toggle("done", cb.checked);
+      updateWatchHighlight(); updateProgress(book); updateProgressGlobal();
+      // Refresh statistics if panel is open
+      const panel = document.getElementById("statsPanel");
+      if(panel.style.display !== "none") {
+        updateStatistics();
+      }
+    };
+
+    const textContainer = document.createElement('div');
+
+    const span = document.createElement("div");
+    span.className="refs";
+    span.textContent = obj.range ? `${abbrFor(book)} ${obj.ch}:${obj.range}` : `${abbrFor(book)} ${obj.ch}`;
+    
+    const dateSpan = document.createElement('div');
+    dateSpan.className = 'date-span';
+    dateSpan.style.fontSize = '0.8rem';
+    dateSpan.style.color = 'var(--muted)';
+    dateSpan.textContent = date || '';
+
+    textContainer.appendChild(span);
+    textContainer.appendChild(dateSpan);
+    
+    div.onclick = () => {
+        let url;
+        if (book === "Genèse" && obj.ch === 1) {
+            url = "https://wol.jw.org/fr/wol/b/r30/lp-f/nwtsty/1/1#study=discover";
+        } else {
+            url = base + BOOK_NUM[book] + "/" + obj.ch + "/";
+        }
+        window.open(url, '_blank');
+    };
+
+    div.appendChild(cb);
+    div.appendChild(textContainer);
+    grid.appendChild(div);
+  });
+  updateProgress(book);
+}
+
+const TOTAL_PORTIONS = (function(){ let s=0; for(const b of BOOKS){ s += BOOK_PORTIONS[b].length; } return s; })();
+function updateProgress(book){
+  const total = BOOK_PORTIONS[book].length;
+  let done = 0;
+  for(let i=0;i<total;i++){ if(DONE.has(`${book}#${i}`)) done++; }
+  const pct = total ? Math.round(done*100/total) : 0;
+  document.getElementById("progressText").textContent = `${done}/${total} — ${pct}%`;
+  document.getElementById("progressFill").style.width = pct + "%";
+}
+function updateProgressGlobal(){
+  const done = DONE.size;
+  const pct = TOTAL_PORTIONS ? Math.round(done*100/TOTAL_PORTIONS) : 0;
+  document.getElementById("globalText").textContent = `${done}/${TOTAL_PORTIONS} — ${pct}%`;
+  document.getElementById("globalFill").style.width = pct + "%";
+}
+
+function updateWatchHighlight(){
+  document.querySelectorAll(".bookBtn").forEach(btn=>{
+    const b = btn.dataset.book;
+    const watch = (LAST_BOOK_CHECKED===b);
+    btn.classList.toggle("watch", watch);
+    let dot = btn.querySelector(".watchDot");
+    if(watch){ if(!dot){ dot = document.createElement("span"); dot.className="watchDot"; btn.appendChild(dot); } }
+    else{ if(dot) dot.remove(); }
+  });
+}
+
+let saveScrollTimer = null;
+function onScroll(){
+  if(!ACTIVE_BOOK) return;
+  clearTimeout(saveScrollTimer);
+  saveScrollTimer = setTimeout(()=>{ POS[ACTIVE_BOOK] = window.scrollY || window.pageYOffset || 0; save(); }, SCROLL_SAVE_DELAY);
+}
+window.addEventListener("scroll", onScroll, {passive:true});
+function restoreScroll(){
+  const y = POS[ACTIVE_BOOK];
+  if(typeof y==="number" && y>=0){ setTimeout(()=>window.scrollTo(0,y), 0); return; }
+  const idx = LAST_IDX[ACTIVE_BOOK];
+  if(typeof idx==="number"){
+    const grid = document.getElementById("grid");
+    const child = grid.children[idx];
+    if(child && child.scrollIntoView){ setTimeout(()=>child.scrollIntoView({block:"center"}), 0); }
+  } else {
+    window.scrollTo(0,0);
+  }
+}
+
+document.getElementById("backToGrid").onclick = showGrid;
+document.getElementById("prevBook").onclick = ()=>{
+  if(!ACTIVE_BOOK) return;
+  const i = BOOKS.indexOf(ACTIVE_BOOK);
+  const j = (i-1+BOOKS.length)%BOOKS.length;
+  openBook(BOOKS[j]);
+};
+document.getElementById("nextBook").onclick = ()=>{
+  if(!ACTIVE_BOOK) return;
+  const i = BOOKS.indexOf(ACTIVE_BOOK);
+  const j = (i+1)%BOOKS.length;
+  openBook(BOOKS[j]);
+};
+document.getElementById("clearBook").onclick = ()=>{
+  if(!ACTIVE_BOOK) return;
+  const msg = LANG==="fr" ? "Effacer tous les cochés pour ce livre ?" : "Clear all checked portions for this book?";
+  showConfirmationModal(msg, (result) => {
+    if (result) {
+      BOOK_PORTIONS[ACTIVE_BOOK].forEach((_,idx)=> {
+        const key = `${ACTIVE_BOOK}#${idx}`;
+        DONE.delete(key)
+        delete DATES[key];
+      });
+      save(); renderBook(); updateProgressGlobal();
+    }
+  });
+};
+
+document.getElementById("langToggle").onclick = ()=>{
+  LANG = (LANG==="fr" ? "en" : "fr"); applyLang(); save();
+};
+document.getElementById("themeToggle").onclick = ()=>{
+  THEME = (THEME==="dark" ? "light" : "dark"); applyTheme(); save();
+};
+
+function applyTheme(){
+  document.body.classList.toggle("light", THEME==="light");
+  // MODIFICATION: Update theme button to show current state
+  document.getElementById("themeToggle").textContent = (THEME === "dark" ? "🌙" : "☀️");
+}
+
+function applyLang(){
+  const t = UI[LANG];
+  document.documentElement.lang = LANG;
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("subline").textContent = t.sub;
+  document.getElementById("secOT").textContent = t.secOT;
+  document.getElementById("secNT").textContent = t.secNT;
+  document.getElementById("backToGrid").textContent = t.back;
+  document.getElementById("prevBook").textContent = t.prev;
+  document.getElementById("nextBook").textContent = t.next;
+  document.getElementById("clearBook").textContent = t.clear;
+  document.getElementById("aboutBtn").textContent = t.about;
+  document.getElementById("exportBtn").textContent = t.export;
+  document.getElementById("importBtn").textContent = t.import;
+  // MODIFICATION: Update language button to show current state
+  document.getElementById("langToggle").textContent = (LANG === "fr" ? "FR" : "EN");
+  // MISE À JOUR : Mettre à jour le texte du bouton de notification et le label
+  updateNotifButtonText();
+  // Update statistics button text and labels
+  document.getElementById("statsToggle").textContent = t.statistics;
+  document.getElementById("statStreakLabel").textContent = t.currentStreak;
+  document.getElementById("statTimeLeftLabel").textContent = t.estimatedTimeLeft;
+  document.getElementById("statBooksCompletedLabel").textContent = t.booksCompleted;
+  document.getElementById("statLastReadLabel").textContent = t.lastRead;
+  // Refresh statistics values if panel is open
+  const panel = document.getElementById("statsPanel");
+  if(panel.style.display !== "none") {
+    updateStatistics();
+  }
+  buildGrid();
+  if(ACTIVE_BOOK){ renderBook(); }
+}
+
+const aboutBtn = document.getElementById("aboutBtn");
+const aboutModal = document.getElementById("aboutModal");
+const aboutClose = document.getElementById("aboutClose");
+const aboutOk = document.getElementById("aboutOk");
+function openAbout(){
+  const t = UI[LANG];
+  document.getElementById("aboutTitle").textContent = t.aboutTitle;
+  document.getElementById("aboutBody").innerHTML = (LANG==='fr'
+    ? `<p><strong>NWT Bible Planning</strong><br>Découvre une façon simple et motivante de parcourir la Bible en entier&nbsp;!</p>
+       <ul>
+         <li>Plan structuré avec portions équilibrées, jour après jour.</li>
+         <li>**Portions d'environ 7 minutes.**</li>
+         <li>Suivi automatique de ta progression, par livre et global.</li>
+         <li>Bilingue français/anglais avec abréviations officielles.</li>
+         <li>Mode clair ou sombre selon ton style.</li>
+         <li>Liens directs vers jw.org pour chaque lecture.</li>
+       </ul>
+       <p>Un outil personnel pensé pour rendre ta lecture biblique plus fluide et inspirante.<br>
+       Créée par <strong>Marc</strong> avec <strong>ChatGPT</strong>, <strong>Gemini</strong> et <strong>WebIntoApp</strong>.<br>
+       📧 Contact&nbsp;: <a href="mailto:sammrevenn@gmail.com" style="color:#7bbdff">sammrevenn@gmail.com</a></p>`
+    : `<p><strong>NWT Bible Planning</strong><br>Discover a simple, motivating way to read through the entire Bible!</p>
+       <ul>
+         <li>Structured plan with balanced portions, day by day.</li>
+         <li>**Portions of about 7 minutes.**</li>
+         <li>Automatic progress tracking — per book and overall.</li>
+         <li>Bilingual French/English with official-style abbreviations.</li>
+         <li>Light or dark mode to match your style.</li>
+         <li>Direct links to jw.org for each reading.</li>
+       </ul>
+       <p>A personal tool designed to make your daily reading smoother and more inspiring.<br>
+       Created by <strong>Marc</strong> with <strong>ChatGPT</strong>, <strong>Gemini</strong> et <strong>WebIntoApp</strong>.<br>
+       📧 Contact: <a href="mailto:sammrevenn@gmail.com" style="color:#7bbdff">sammrevenn@gmail.com</a></p>`
+  );
+  aboutOk.textContent = t.aboutOk;
+  aboutBtn.textContent = t.about;
+  aboutModal.style.display = "flex";
+}
+function closeAbout(){ aboutModal.style.display = "none"; }
+aboutBtn.onclick = openAbout;
+aboutClose.onclick = closeAbout;
+aboutOk.onclick = closeAbout;
+aboutModal.addEventListener("click", (e)=>{ if(e.target===aboutModal) closeAbout(); });
+
+// ====== Export / Import ======
+const EXPORT_VERSION = 1;
+function getStateObj() {
+  return {
+    v: EXPORT_VERSION,
+    done: [...DONE],
+    dates: DATES,
+    pos: POS,
+    lastIdx: LAST_IDX,
+    lastBookChecked: LAST_BOOK_CHECKED,
+    lang: LANG,
+    theme: THEME,
+    active: ACTIVE_BOOK,
+    // Ajout des données de notification à l'export
+    notifEnabled: NOTIF_ENABLED,
+    notifTime: NOTIF_TIME,
+    lastNotifDate: LAST_NOTIF_DATE
+  };
+}
+function setStateFrom(obj, {mode="replace"} = {}) {
+  if (!obj || obj.v !== EXPORT_VERSION) throw new Error("Version incompatible");
+  if (mode === "replace") {
+    DONE = new Set(obj.done || []);
+    DATES = obj.dates || {};
+  } else {
+    const s = new Set(obj.done || []);
+    DONE = new Set([...DONE, ...s]);
+    DATES = {...DATES, ...(obj.dates || {})};
+  }
+  POS = obj.pos || {};
+  LAST_IDX = obj.lastIdx || {};
+  LAST_BOOK_CHECKED = obj.lastBookChecked || null;
+  LANG = obj.lang || LANG;
+  THEME = obj.theme || THEME;
+  ACTIVE_BOOK = obj.active && CANON.find(x=>x[0]===obj.active) ? obj.active : null;
+
+  // Ajout des données de notification à l'import
+  NOTIF_ENABLED = obj.notifEnabled || false;
+  NOTIF_TIME = obj.notifTime || "08:00";
+  LAST_NOTIF_DATE = obj.lastNotifDate || null;
+  document.getElementById("notifTime").value = NOTIF_TIME;
+
+  save(); applyTheme(); applyLang(); updateProgressGlobal();
+  if (ACTIVE_BOOK) openBook(ACTIVE_BOOK); else showGrid();
+}
+function exportPlan() {
+  const data = getStateObj();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  const name = `bible-planning-sav-${dateStr}.json`;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+document.getElementById("exportBtn").onclick = exportPlan;
+
+const importInput = document.getElementById("importFile");
+document.getElementById("importBtn").onclick = () => importInput.click();
+importInput.addEventListener("change", () => {
+  const f = importInput.files && importInput.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      const msg = (LANG==="fr")
+        ? "Importer ce fichier ?\nOK = Remplacer, Annuler = Fusionner (ajoute les cochés)."
+        : "Import this file?\nOK = Replace, Cancel = Merge (adds the checks).";
+      showConfirmationModal(msg, (result) => {
+        const mode = result ? "replace" : "merge";
+        setStateFrom(obj, {mode});
+        showAlertModal(LANG==="fr" ? "Import terminé." : "Import complete.");
+      });
+    } catch(e) {
+      console.error(e);
+      showAlertModal(LANG==="fr" ? "Fichier invalide." : "Invalid file.");
+    } finally {
+      importInput.value = "";
+    }
+  };
+  reader.readAsText(f, "utf-8");
+});
+
+// ====== Custom Modals ======
+function showConfirmationModal(message, callback) {
+    window.modalCallback = (result) => {
+        callback(result);
+        delete window.modalCallback;
+    };
+    const modalId = `confirm-modal-${Date.now()}`;
+    const cancelText = UI[LANG].cancel || 'Cancel';
+    const modalHtml = `
+        <div id="${modalId}" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:rgba(0,0,0,.45)">
+            <div style="max-width:400px;width:90%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35)">
+                <div style="padding:16px;line-height:1.6">
+                    <p>${message.replace(/\n/g, '<br>')}</p>
+                </div>
+                <div style="display:flex;justify-content:flex-end;padding:10px 14px;border-top:1px solid var(--border);gap:8px;">
+                    <button class="btn" onclick="document.getElementById('${modalId}').remove(); window.modalCallback(false);">${cancelText}</button>
+                    <button class="btn" onclick="document.getElementById('${modalId}').remove(); window.modalCallback(true);">OK</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showAlertModal(message) {
+    const modalId = `alert-modal-${Date.now()}`;
+    const modalHtml = `
+        <div id="${modalId}" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:101;background:rgba(0,0,0,.45)">
+            <div style="max-width:400px;width:90%;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35)">
+                <div style="padding:16px;line-height:1.6; text-align: center;">
+                    <p>${message.replace(/\n/g, '<br>')}</p>
+                </div>
+                <div style="display:flex;justify-content:center;padding:10px 14px;border-top:1px solid var(--border);">
+                    <button class="btn" onclick="document.getElementById('${modalId}').remove();">OK</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// ====== NOUVELLE SECTION: Notifications ======
+
+// Met à jour le texte du bouton et l'affichage du sélecteur d'heure
+function updateNotifButtonText() {
+  const t = UI[LANG];
+  const btn = document.getElementById("notifToggleBtn");
+  const container = document.getElementById("notifTimeContainer");
+  const label = document.getElementById("notifLabel");
+
+  if (NOTIF_ENABLED) {
+    btn.textContent = t.notifOn;
+    btn.classList.add("watch"); // Style "ON"
+    container.style.display = "flex"; // Afficher le sélecteur d'heure
+  } else {
+    btn.textContent = t.notifOff;
+    btn.classList.remove("watch"); // Style "OFF"
+    container.style.display = "none"; // Masquer le sélecteur d'heure
+  }
+  label.textContent = t.notifLabel;
+}
+
+// Demande la permission d'envoyer des notifications
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    return false; // Notifications non supportées
+  }
+  if (Notification.permission === 'granted') {
+    return true; // Déjà autorisé
+  }
+  if (Notification.permission === 'denied') {
+    showAlertModal(UI[LANG].notifBlocked);
+    return false; // Bloqué
+  }
+  // Demander la permission
+  const permission = await Notification.requestPermission();
+  if (permission === 'granted') {
+    return true;
+  }
+  return false;
+}
+
+// Écouteur d'événement pour le bouton ON/OFF
+document.getElementById("notifToggleBtn").onclick = async () => {
+  if (!NOTIF_ENABLED) {
+    // Si on essaie de l'activer
+    const permissionGranted = await requestNotificationPermission();
+    if (!permissionGranted) {
+      NOTIF_ENABLED = false; // Forcer à OFF si la permission est refusée
+      save();
+      updateNotifButtonText();
+      return; // Ne pas continuer
+    }
+  }
+
+  // Si la permission est accordée (ou si on désactive)
+  NOTIF_ENABLED = !NOTIF_ENABLED; // Inverse l'état
+  save();
+  updateNotifButtonText();
+};
+
+// Écouteur d'événement pour le sélecteur d'heure
+document.getElementById("notifTime").addEventListener("change", (e) => {
+  NOTIF_TIME = e.target.value;
+  save();
+});
+
+// Fonction pour envoyer la notification
+function sendNotification() {
+  const t = UI[LANG];
+  const title = t.notifTitle;
+  const options = {
+    body: t.notifBody,
+    // Vous pouvez ajouter une icône ici si vous en avez une
+    // icon: "path/to/icon.png" 
+  };
+  
+  // Utilise le Service Worker s'il est disponible (meilleur pour les PWA)
+  // Sinon, utilise une notification simple.
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: 'show-notification', title, options });
+  } else {
+    new Notification(title, options);
+  }
+}
+
+// Vérifie s'il est temps d'envoyer une notification
+function checkNotification() {
+  if (!NOTIF_ENABLED || Notification.permission !== 'granted') {
+    return; // Ne rien faire si désactivé ou non autorisé
+  }
+
+  const now = new Date();
+  const today = now.toISOString().split('T')[0]; // Date au format YYYY-MM-DD
+  
+  // Si une notif a déjà été envoyée aujourd'hui, ne rien faire
+  if (LAST_NOTIF_DATE === today) {
+    return;
+  }
+
+  const [hours, minutes] = NOTIF_TIME.split(':');
+  
+  if (now.getHours() == hours && now.getMinutes() == minutes) {
+    // C'est l'heure !
+    sendNotification();
+    LAST_NOTIF_DATE = today; // Marquer comme envoyée pour aujourd'hui
+    save();
+  }
+}
+
+// Démarre un minuteur pour vérifier l'heure
+function startNotificationTimer() {
+  // Vérifie immédiatement au chargement
+  checkNotification();
+  // Puis vérifie toutes les 30 secondes
+  // (Intervalle court pour ne pas manquer la minute exacte)
+  setInterval(checkNotification, NOTIF_CHECK_INTERVAL);
+}
+
+// ====== Statistics Functions ======
+function toggleStats() {
+  const panel = document.getElementById("statsPanel");
+  const isVisible = panel.style.display !== "none";
+  panel.style.display = isVisible ? "none" : "block";
+  if (!isVisible) updateStatistics();
+}
+
+function updateStatistics() {
+  // Calculate streak
+  const streak = calculateStreak();
+  document.getElementById("statStreak").textContent = streak + (LANG==="fr" ? " jours" : " days");
+  
+  // Calculate estimated time left
+  const remaining = TOTAL_PORTIONS - DONE.size;
+  const hoursLeft = Math.round((remaining * PORTION_DURATION_MINUTES) / 60);
+  document.getElementById("statTimeLeft").textContent = "~" + hoursLeft + (LANG==="fr" ? " heures" : " hours");
+  
+  // Calculate books completed
+  let booksCompleted = 0;
+  BOOKS.forEach(book => {
+    const total = BOOK_PORTIONS[book].length;
+    let done = 0;
+    for(let i=0; i<total; i++) {
+      if(DONE.has(`${book}#${i}`)) done++;
+    }
+    if(done === total) booksCompleted++;
+  });
+  document.getElementById("statBooksCompleted").textContent = booksCompleted + "/66";
+  
+  // Last read date
+  let lastDate = null;
+  for(const key in DATES) {
+    const date = DATES[key];
+    if(!lastDate || date > lastDate) lastDate = date;
+  }
+  document.getElementById("statLastRead").textContent = lastDate || (LANG==="fr" ? "Jamais" : "Never");
+}
+
+function calculateStreak() {
+  if(Object.keys(DATES).length === 0) return 0;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  let streak = 0;
+  let checkDate = new Date(today);
+  
+  while(true) {
+    const dateStr = checkDate.toISOString().split('T')[0];
+    let foundReading = false;
+    
+    for(const key in DATES) {
+      if(DATES[key] === dateStr) {
+        foundReading = true;
+        break;
+      }
+    }
+    
+    if(foundReading) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      // If today has no reading, don't break the streak yet
+      if(streak === 0 && checkDate.getTime() === today.getTime()) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+  }
+  
+  return streak;
+}
+
+// ====== Service Worker Registration ======
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('Service Worker enregistré avec succès:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Échec de l\'enregistrement du Service Worker:', error);
+      });
+  });
+}
+
+// ====== Start ======
+load();
+applyTheme();
+applyLang(); // Ceci appelle maintenant updateNotifButtonText()
+updateProgressGlobal();
+if(ACTIVE_BOOK){ openBook(ACTIVE_BOOK); } else { showGrid(); }
+
+// Démarrer le vérificateur de notifications
+startNotificationTimer();
+
+// Setup statistics toggle
+document.getElementById("statsToggle").onclick = toggleStats;
+</script>
+
+</body>
+</html>
