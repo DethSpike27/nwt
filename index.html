@@ -830,54 +830,78 @@ document.getElementById("notifTime").addEventListener("change", (e) => {
 
 // Fonction pour envoyer la notification
 function sendNotification() {
+  console.log('[NOTIF] Envoi de la notification...');
   const t = UI[LANG];
   const title = t.notifTitle;
   const options = {
     body: t.notifBody,
-    // Vous pouvez ajouter une icône ici si vous en avez une
-    // icon: "path/to/icon.png" 
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: 'bible-reading-reminder',
+    requireInteraction: false,
+    vibrate: [200, 100, 200]
   };
   
   // Utilise le Service Worker s'il est disponible (meilleur pour les PWA)
-  // Sinon, utilise une notification simple.
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    console.log('[NOTIF] Envoi via Service Worker');
     navigator.serviceWorker.controller.postMessage({ type: 'show-notification', title, options });
-  } else {
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    console.log('[NOTIF] Envoi via Notification API');
     new Notification(title, options);
+  } else {
+    console.error('[NOTIF] Impossible d\'envoyer la notification');
   }
 }
 
 // Vérifie s'il est temps d'envoyer une notification
 function checkNotification() {
-  if (!NOTIF_ENABLED || Notification.permission !== 'granted') {
-    return; // Ne rien faire si désactivé ou non autorisé
+  if (!NOTIF_ENABLED) {
+    console.log('[NOTIF] Notifications désactivées');
+    return;
+  }
+  
+  if (Notification.permission !== 'granted') {
+    console.log('[NOTIF] Permission non accordée:', Notification.permission);
+    return;
   }
 
   const now = new Date();
   const today = now.toISOString().split('T')[0]; // Date au format YYYY-MM-DD
+  const currentHours = now.getHours();
+  const currentMinutes = now.getMinutes();
+  
+  console.log(`[NOTIF] Vérification: ${currentHours}:${currentMinutes}, Heure cible: ${NOTIF_TIME}, Dernière notif: ${LAST_NOTIF_DATE}`);
   
   // Si une notif a déjà été envoyée aujourd'hui, ne rien faire
   if (LAST_NOTIF_DATE === today) {
+    console.log('[NOTIF] Notification déjà envoyée aujourd\'hui');
     return;
   }
 
-  const [hours, minutes] = NOTIF_TIME.split(':');
+  const [targetHours, targetMinutes] = NOTIF_TIME.split(':').map(Number);
   
-  if (now.getHours() == hours && now.getMinutes() == minutes) {
-    // C'est l'heure !
+  // Vérifie si c'est l'heure (avec une marge de 1 minute)
+  if (currentHours === targetHours && currentMinutes === targetMinutes) {
+    console.log('[NOTIF] C\'est l\'heure ! Envoi de la notification...');
     sendNotification();
-    LAST_NOTIF_DATE = today; // Marquer comme envoyée pour aujourd'hui
+    LAST_NOTIF_DATE = today;
     save();
   }
 }
 
 // Démarre un minuteur pour vérifier l'heure
 function startNotificationTimer() {
+  console.log('[NOTIF] Démarrage du timer de notifications');
+  console.log('[NOTIF] Notifications activées:', NOTIF_ENABLED);
+  console.log('[NOTIF] Heure configurée:', NOTIF_TIME);
+  console.log('[NOTIF] Permission:', Notification.permission);
+  
   // Vérifie immédiatement au chargement
   checkNotification();
-  // Puis vérifie toutes les 30 secondes
-  // (Intervalle court pour ne pas manquer la minute exacte)
-  setInterval(checkNotification, NOTIF_CHECK_INTERVAL);
+  
+  // Puis vérifie toutes les 60 secondes (1 minute)
+  setInterval(checkNotification, 60000);
 }
 
 // ====== Statistics Functions ======
