@@ -24,5 +24,9 @@
   ],
   "categories": ["education", "lifestyle"],
   "lang": "fr",
-  "dir": "ltr"
+  "dir": "ltr",
+  "permissions": [
+    "notifications"
+  ],
+  "gcm_sender_id": "103953800507"
 }
