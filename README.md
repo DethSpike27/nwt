@@ -1,2 +1,2 @@
-# nwt-bible-planning
-Plan de lecture biblique NWT
+# nwt
+NWT
