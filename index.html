@@ -1,128 +1,1203 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CashewS</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Apple Touch Icon (iPad / iPhone Add to Home Screen) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="CashewS">
-  <meta name="theme-color" content="#3b82f6">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NWT</title>
+    <meta name="description" content="Bible reading tracker - NWT Study Bible. Track your reading progress through the Hebrew-Aramaic and Christian Greek Scriptures.">
+    <meta name="theme-color" content="#4a6da7">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%234a6da7'/><text x='50' y='68' font-family='Arial,sans-serif' font-size='38' font-weight='bold' fill='white' text-anchor='middle'>NWT</text></svg>">
+    <style>
+        :root {
+  --bg-color: #f4f4f4;
+  --text-color: #333;
+  --container-bg: #fff;
+  --primary-color: #4a6da7;
+  --border-color: #e0e0e0;
+  --border-light: #f0f0f0;
+  --secondary-text: #666;
+  --tertiary-text: #888;
+  --hover-bg: #eef2f8;
+  --completed-text: #aaa;
+  --shadow-color: rgba(0,0,0,0.1);
+  --card-bg: #fff;
+  --card-hover-shadow: rgba(0,0,0,0.1);
+  --progress-bg: #e0e0e0;
+  --streak-color: #e67e22;
+  --btn-text: #fff;
+  --nav-btn-bg: #f0f0f0;
+  --nav-btn-hover: #e0e0e0;
+  --nav-btn-text: #333;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --container-bg: #1e1e1e;
+  --primary-color: #6b8cce;
+  --border-color: #333;
+  --border-light: #2a2a2a;
+  --secondary-text: #aaa;
+  --tertiary-text: #777;
+  --hover-bg: #2c3e50;
+  --completed-text: #555;
+  --shadow-color: rgba(0,0,0,0.5);
+  --card-bg: #252525;
+  --card-hover-shadow: rgba(0,0,0,0.3);
+  --progress-bg: #333;
+  --streak-color: #e67e22;
+  --btn-text: #fff;
+  --nav-btn-bg: #333;
+  --nav-btn-hover: #444;
+  --nav-btn-text: #e0e0e0;
+}
+
+body {
+  font-family: "Noto Sans", Arial, "Helvetica Neue", Helvetica, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 5px;
+  line-height: 1.4;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+  max-width: 100%;
+  margin: 0 auto;
+  background: var(--container-bg);
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px var(--shadow-color);
+  transition: background-color 0.3s;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--primary-color);
+  padding-bottom: 5px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h1 {
+  color: var(--primary-color);
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.language-switcher {
+  display: flex;
+  gap: 5px;
+}
+
+.lang-btn {
+  background: none;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 2px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.lang-btn.active {
+  background-color: var(--primary-color);
+  color: var(--btn-text);
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 0 5px;
+  color: var(--text-color);
+}
+
+p.subtitle {
+  color: var(--secondary-text);
+  font-style: italic;
+  margin: 0;
+}
+
+.progress-container {
+  background-color: var(--progress-bg);
+  border-radius: 3px;
+  height: 10px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: var(--primary-color);
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.8em;
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.section-title {
+  font-size: 1em;
+  color: var(--primary-color);
+  margin: 15px 0 8px 0;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 2px;
+  font-weight: bold;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.book-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s, background-color 0.3s;
+}
+
+.book-card:hover {
+  box-shadow: 0 4px 8px var(--card-hover-shadow);
+  transform: translateY(-2px);
+}
+
+.book-header {
+  padding: 8px;
+  cursor: pointer;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.book-title {
+  font-weight: bold;
+  font-size: 0.95em;
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-progress {
+  font-size: 0.75em;
+  color: var(--tertiary-text);
+  display: block;
+}
+
+.portions-list {
+  display: none;
+  padding: 0;
+  background-color: var(--bg-color);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.book-card.active .portions-list {
+  display: block;
+}
+
+.book-card.active .book-header {
+  background-color: var(--hover-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.book-card.active .book-title {
+  color: var(--primary-color);
+}
+
+.book-card.last-read {
+  border: 2px solid var(--primary-color);
+  box-shadow: 0 0 10px rgba(74, 109, 167, 0.3);
+}
+
+.last-read-indicator {
+  display: block;
+  font-size: 0.75em;
+  color: var(--primary-color);
+  font-weight: bold;
+  margin-top: 5px;
+  text-transform: uppercase;
+}
+
+.portion-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-light);
+}
+
+.portion-item:last-child {
+  border-bottom: none;
+}
+
+.portion-checkbox {
+  margin-right: 15px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.portion-link {
+  text-decoration: none;
+  color: var(--text-color);
+  flex-grow: 1;
+  display: block;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.portion-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--primary-color);
+}
+
+.portion-link.completed {
+  color: var(--completed-text);
+  text-decoration: line-through;
+}
+
+/* Book Detail View Styles */
+.book-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.nav-arrows {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-btn {
+  background-color: var(--nav-btn-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: var(--nav-btn-text);
+  transition: background-color 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  background-color: var(--nav-btn-hover);
+}
+
+.nav-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.portions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.portion-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  transition: box-shadow 0.2s;
+  min-height: 40px;
+}
+
+.portion-card:hover {
+  box-shadow: 0 2px 4px var(--card-hover-shadow);
+}
+
+.portion-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.portion-checkbox-large {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.portion-label {
+  font-weight: 500;
+  line-height: 1.1;
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-color);
+}
+
+.portion-label.completed {
+  color: var(--completed-text);
+  text-decoration: line-through;
+}
+
+.portion-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.portion-date {
+  font-size: 0.7em;
+  color: var(--tertiary-text);
+  margin-top: 0;
+  line-height: 1;
+}
+
+.streak-text {
+  display: inline-block;
+  margin-top: 2px;
+  font-weight: bold;
+  color: var(--streak-color);
+  font-size: 0.9em;
+}
+
+.portion-action-btn {
+  display: inline-block;
+  text-align: center;
+  background-color: var(--primary-color);
+  color: var(--btn-text);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  margin-top: 0;
+  margin-left: 8px;
+  font-size: 0.8em;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.portion-action-btn:hover {
+  background-color: #3a5d97;
+}
+
+/* Data Management */
+.data-management {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.action-btn {
+  background-color: var(--nav-btn-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.action-btn:hover {
+  background-color: var(--nav-btn-hover);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .container {
+    padding: 5px;
+  }
+  
+  .book-header {
+    padding: 6px;
+  }
+
+  .book-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 5px;
+  }
+
+  .portions-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 5px;
+  }
+}
+    </style>
 </head>
 <body>
-  <!-- EN-TÊTE -->
-  <header>
-    <span class="logo">CashewS</span>
-    <nav class="mois-nav">
-      <button id="btn-prev">◀</button>
-      <span id="lbl-mois">—</span>
-      <button id="btn-next">▶</button>
-    </nav>
-    <nav class="annee-nav">
-      <button id="btn-annee-prev">◀</button>
-      <span id="lbl-annee">—</span>
-      <button id="btn-annee-next">▶</button>
-    </nav>
-    <div class="header-btns">
-      <button onclick="importerFichier()">📥 Importer</button>
-      <button onclick="exporterCSV()">📤 CSV</button>
-      <button onclick="exporterJSON()">💾 JSON</button>
-      <input type="file" id="file-input" accept=".json,.csv" style="display:none" onchange="lireFichier(event)">
+    <div class="container">
+        <header>
+            <h1>NWT</h1>
+            <div class="header-controls">
+                <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode">🌙</button>
+                <div class="language-switcher">
+                    <button id="lang-en" class="lang-btn active">EN</button>
+                    <button id="lang-fr" class="lang-btn">FR</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0% lu</div>
+
+        <div id="main-view">
+            <div class="section-title" id="hebrew-title">HEBREW-ARAMAIC SCRIPTURES</div>
+            <div class="book-grid" id="hebrew-scriptures">
+                <!-- Les livres seront générés ici par JavaScript -->
+            </div>
+
+            <div class="section-title" id="greek-title">CHRISTIAN GREEK SCRIPTURES</div>
+            <div class="book-grid" id="greek-scriptures">
+                <!-- Les livres seront générés ici par JavaScript -->
+            </div>
+
+            <div class="data-management">
+                <button id="export-btn" class="action-btn">⬇️ Sauvegarder (Export)</button>
+                <button id="import-btn" class="action-btn">⬆️ Charger (Import)</button>
+                <input type="file" id="import-file" style="display: none;" accept=".json">
+            </div>
+        </div>
+
+        <div id="book-view" style="display: none;">
+            <div class="book-navigation">
+                <a href="#" id="back-button" class="back-link">← Retour à la liste</a>
+                <div class="nav-arrows">
+                    <button id="prev-book-btn" class="nav-btn" title="Livre précédent">← Précédent</button>
+                    <button id="next-book-btn" class="nav-btn" title="Livre suivant">Suivant →</button>
+                </div>
+            </div>
+            <h2 id="book-view-title">Titre du Livre</h2>
+            <div class="progress-container">
+                <div class="progress-bar" id="book-view-progress-bar"></div>
+            </div>
+            <div class="progress-text" id="book-view-progress-text">0% lu</div>
+            <div id="book-portions-grid" class="portions-grid">
+                <!-- Les portions seront générées ici par JavaScript -->
+            </div>
+        </div>
     </div>
-  </header>
 
-  <!-- CARTES RÉSUMÉ -->
-  <section class="cards">
-    <div class="card accent"><div class="card-title">Solde</div><div class="card-val" id="c-solde">+0.00 $</div></div>
-    <div class="card green"><div class="card-title">Entrées</div><div class="card-val" id="c-entrees">+0.00 $</div></div>
-    <div class="card red"><div class="card-title">Sorties</div><div class="card-val" id="c-sorties">-0.00 $</div></div>
-  </section>
+    <script>
+        const bibleData = [
+    { name: "Genèse", slug: "genese", nameEn: "Genesis", slugEn: "genesis", chapters: [31, 25, 24, 26, 32, 22, 24, 22, 29, 32, 32, 20, 18, 24, 21, 16, 27, 33, 38, 18, 34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 55, 32, 20, 31, 29, 43, 36, 30, 23, 23, 57, 38, 34, 34, 28, 34, 31, 22, 33, 26] },
+    { name: "Exode", slug: "exode", nameEn: "Exodus", slugEn: "exodus", chapters: [22, 25, 22, 31, 23, 30, 25, 32, 35, 29, 10, 51, 22, 31, 27, 36, 16, 27, 25, 26, 36, 31, 33, 18, 40, 37, 21, 43, 46, 38, 18, 35, 23, 35, 35, 38, 29, 31, 43, 38] },
+    { name: "Lévitique", slug: "levitique", nameEn: "Leviticus", slugEn: "leviticus", chapters: [17, 16, 17, 35, 19, 30, 38, 36, 24, 20, 47, 8, 59, 57, 33, 34, 16, 30, 37, 27, 24, 33, 44, 23, 55, 46, 34] },
+    { name: "Nombres", slug: "nombres", nameEn: "Numbers", slugEn: "numbers", chapters: [54, 34, 51, 49, 31, 27, 89, 26, 23, 36, 35, 16, 33, 45, 41, 50, 13, 32, 22, 29, 35, 41, 30, 25, 18, 65, 23, 31, 40, 16, 54, 42, 56, 29, 34, 13] },
+    { name: "Deutéronome", slug: "deuteronome", nameEn: "Deuteronomy", slugEn: "deuteronomy", chapters: [46, 37, 29, 49, 33, 25, 26, 20, 29, 22, 32, 32, 18, 29, 23, 22, 20, 22, 21, 20, 23, 30, 25, 22, 19, 19, 26, 68, 29, 20, 30, 52, 29, 12] },
+    { name: "Josué", slug: "josue", nameEn: "Joshua", slugEn: "joshua", chapters: [18, 24, 17, 24, 15, 27, 26, 35, 27, 43, 23, 24, 33, 15, 63, 10, 18, 28, 51, 9, 45, 34, 16, 33] },
+    { name: "Juges", slug: "juges", nameEn: "Judges", slugEn: "judges", chapters: [36, 23, 31, 24, 31, 40, 25, 35, 57, 18, 40, 15, 25, 20, 20, 31, 13, 31, 30, 48, 25] },
+    { name: "Ruth", slug: "ruth", nameEn: "Ruth", slugEn: "ruth", chapters: [22, 23, 18, 22] },
+    { name: "1 Samuel", slug: "1-samuel", nameEn: "1 Samuel", slugEn: "1-samuel", chapters: [28, 36, 21, 22, 12, 21, 17, 22, 27, 27, 15, 25, 23, 52, 35, 23, 58, 30, 24, 42, 15, 23, 29, 22, 44, 25, 12, 25, 11, 31, 13] },
+    { name: "2 Samuel", slug: "2-samuel", nameEn: "2 Samuel", slugEn: "2-samuel", chapters: [27, 32, 39, 12, 25, 23, 29, 18, 13, 19, 27, 31, 39, 33, 37, 23, 29, 33, 43, 26, 22, 51, 39, 25] },
+    { name: "1 Rois", slug: "1-rois", nameEn: "1 Kings", slugEn: "1-kings", chapters: [53, 46, 28, 34, 18, 38, 51, 66, 28, 29, 43, 33, 34, 31, 34, 34, 24, 46, 21, 43, 29, 53] },
+    { name: "2 Rois", slug: "2-rois", nameEn: "2 Kings", slugEn: "2-kings", chapters: [18, 25, 27, 44, 27, 33, 20, 29, 37, 36, 21, 21, 25, 29, 38, 20, 41, 37, 37, 21, 26, 20, 37, 20, 30] },
+    { name: "1 Chroniques", slug: "1-chroniques", nameEn: "1 Chronicles", slugEn: "1-chronicles", chapters: [54, 55, 24, 43, 26, 81, 40, 40, 44, 14, 47, 40, 14, 17, 29, 43, 27, 17, 19, 8, 30, 19, 32, 31, 31, 32, 34, 21, 30] },
+    { name: "2 Chroniques", slug: "2-chroniques", nameEn: "2 Chronicles", slugEn: "2-chronicles", chapters: [17, 18, 17, 22, 14, 42, 22, 18, 31, 19, 23, 16, 22, 15, 19, 14, 19, 34, 11, 37, 20, 12, 21, 27, 28, 23, 9, 27, 36, 27, 21, 33, 25, 33, 27, 23] },
+    { name: "Esdras", slug: "esdras", nameEn: "Ezra", slugEn: "ezra", chapters: [11, 70, 13, 24, 17, 22, 28, 36, 15, 44] },
+    { name: "Néhémie", slug: "nehemie", nameEn: "Nehemiah", slugEn: "nehemiah", chapters: [11, 20, 32, 23, 19, 19, 73, 18, 38, 39, 36, 47, 31] },
+    { name: "Esther", slug: "esther", nameEn: "Esther", slugEn: "esther", chapters: [22, 23, 15, 17, 14, 14, 10, 17, 32, 3] },
+    { name: "Job", slug: "job", nameEn: "Job", slugEn: "job", chapters: [22, 13, 26, 21, 27, 30, 21, 22, 35, 22, 20, 25, 28, 22, 35, 22, 16, 21, 29, 29, 34, 30, 17, 25, 6, 14, 23, 28, 25, 31, 40, 22, 33, 37, 16, 33, 24, 41, 30, 24, 34, 17] },
+    { name: "Psaumes", slug: "psaumes", nameEn: "Psalms", slugEn: "psalms", chapters: [6, 12, 8, 8, 12, 10, 17, 9, 20, 18, 7, 8, 6, 7, 5, 11, 15, 50, 14, 9, 13, 31, 6, 10, 22, 12, 14, 9, 11, 12, 24, 11, 22, 22, 28, 12, 40, 22, 13, 17, 13, 11, 5, 26, 17, 11, 9, 14, 20, 23, 19, 9, 6, 7, 23, 13, 11, 11, 17, 12, 8, 12, 11, 10, 13, 20, 7, 35, 36, 5, 24, 20, 28, 23, 10, 12, 20, 72, 13, 19, 16, 8, 18, 12, 13, 17, 7, 18, 52, 17, 16, 15, 5, 23, 11, 13, 12, 9, 9, 5, 8, 28, 22, 35, 45, 48, 43, 13, 31, 7, 10, 10, 9, 8, 18, 19, 2, 29, 176, 7, 8, 9, 4, 8, 5, 6, 5, 6, 8, 8, 3, 18, 3, 3, 21, 26, 9, 8, 24, 13, 10, 7, 12, 15, 21, 10, 20, 14, 9, 6] },
+    { name: "Proverbes", slug: "proverbes", nameEn: "Proverbs", slugEn: "proverbs", chapters: [33, 22, 35, 27, 23, 35, 27, 36, 18, 32, 31, 28, 25, 35, 33, 33, 28, 24, 29, 30, 31, 29, 35, 34, 28, 28, 27, 28, 27, 33, 31] },
+    { name: "Ecclésiaste", slug: "ecclesiaste", nameEn: "Ecclesiastes", slugEn: "ecclesiastes", chapters: [18, 26, 22, 16, 20, 12, 29, 17, 18, 20, 10, 14] },
+    { name: "Chant de Salomon", slug: "chant-de-salomon", nameEn: "Song of Solomon", slugEn: "song-of-solomon", chapters: [17, 17, 11, 16, 16, 13, 13, 14] },
+    { name: "Isaïe", slug: "isaie", nameEn: "Isaiah", slugEn: "isaiah", chapters: [31, 22, 26, 6, 30, 13, 25, 22, 21, 34, 16, 6, 22, 32, 9, 14, 14, 7, 25, 6, 17, 25, 18, 23, 12, 21, 13, 29, 24, 33, 9, 20, 24, 17, 10, 22, 38, 22, 8, 31, 29, 25, 28, 28, 25, 13, 15, 22, 26, 11, 23, 15, 12, 17, 13, 12, 21, 14, 21, 22, 11, 12, 19, 12, 25, 24] },
+    { name: "Jérémie", slug: "jeremie", nameEn: "Jeremiah", slugEn: "jeremiah", chapters: [19, 37, 25, 31, 31, 30, 34, 22, 26, 25, 23, 17, 27, 22, 21, 21, 27, 23, 15, 18, 14, 30, 40, 10, 38, 24, 22, 17, 32, 24, 40, 44, 26, 22, 19, 32, 21, 28, 18, 16, 18, 22, 13, 30, 5, 28, 7, 47, 39, 46, 64, 34] },
+    { name: "Lamentations", slug: "lamentations", nameEn: "Lamentations", slugEn: "lamentations", chapters: [22, 22, 66, 22, 22] },
+    { name: "Ézéchiel", slug: "ezechiel", nameEn: "Ezekiel", slugEn: "ezekiel", chapters: [28, 10, 27, 17, 17, 14, 27, 18, 11, 22, 25, 28, 23, 23, 8, 63, 24, 32, 14, 49, 32, 31, 49, 27, 17, 21, 36, 26, 21, 26, 18, 32, 33, 31, 15, 38, 28, 23, 29, 49, 26, 20, 27, 31, 25, 24, 23, 35] },
+    { name: "Daniel", slug: "daniel", nameEn: "Daniel", slugEn: "daniel", chapters: [21, 49, 30, 37, 31, 28, 28, 27, 27, 21, 45, 13] },
+    { name: "Osée", slug: "osee", nameEn: "Hosea", slugEn: "hosea", chapters: [11, 23, 5, 19, 15, 11, 16, 14, 17, 15, 12, 14, 16, 9] },
+    { name: "Joël", slug: "joel", nameEn: "Joel", slugEn: "joel", chapters: [20, 32, 21] },
+    { name: "Amos", slug: "amos", nameEn: "Amos", slugEn: "amos", chapters: [15, 16, 15, 13, 27, 14, 17, 14, 15] },
+    { name: "Abdias", slug: "abdias", nameEn: "Obadiah", slugEn: "obadiah", chapters: [21] },
+    { name: "Jonas", slug: "jonas", nameEn: "Jonah", slugEn: "jonah", chapters: [17, 10, 10, 11] },
+    { name: "Michée", slug: "michee", nameEn: "Micah", slugEn: "micah", chapters: [16, 13, 12, 13, 15, 16, 20] },
+    { name: "Nahum", slug: "nahum", nameEn: "Nahum", slugEn: "nahum", chapters: [15, 13, 19] },
+    { name: "Habacuc", slug: "habacuc", nameEn: "Habakkuk", slugEn: "habakkuk", chapters: [17, 20, 19] },
+    { name: "Sophonie", slug: "sophonie", nameEn: "Zephaniah", slugEn: "zephaniah", chapters: [18, 15, 20] },
+    { name: "Aggée", slug: "aggee", nameEn: "Haggai", slugEn: "haggai", chapters: [15, 23] },
+    { name: "Zacharie", slug: "zacharie", nameEn: "Zechariah", slugEn: "zechariah", chapters: [21, 13, 10, 14, 11, 15, 14, 23, 17, 12, 17, 14, 9, 21] },
+    { name: "Malachie", slug: "malachie", nameEn: "Malachi", slugEn: "malachi", chapters: [14, 17, 18, 6] },
+    { name: "Matthieu", slug: "matthieu", nameEn: "Matthew", slugEn: "matthew", chapters: [25, 23, 17, 25, 48, 34, 29, 34, 38, 42, 30, 50, 58, 36, 39, 28, 27, 35, 30, 34, 46, 46, 39, 51, 46, 75, 66, 20] },
+    { name: "Marc", slug: "marc", nameEn: "Mark", slugEn: "mark", chapters: [45, 28, 35, 41, 43, 56, 37, 38, 50, 52, 33, 44, 37, 72, 47, 20] },
+    { name: "Luc", slug: "luc", nameEn: "Luke", slugEn: "luke", chapters: [80, 52, 38, 44, 39, 49, 50, 56, 62, 42, 54, 59, 35, 35, 32, 31, 37, 43, 48, 47, 38, 71, 56, 53] },
+    { name: "Jean", slug: "jean", nameEn: "John", slugEn: "john", chapters: [51, 25, 36, 54, 47, 71, 53, 59, 41, 42, 57, 50, 38, 31, 27, 33, 26, 40, 42, 31, 25] },
+    { name: "Actes", slug: "actes", nameEn: "Acts", slugEn: "acts", chapters: [26, 47, 26, 37, 42, 15, 60, 40, 43, 48, 30, 25, 52, 28, 41, 40, 34, 28, 41, 38, 40, 30, 35, 27, 27, 32, 44, 31] },
+    { name: "Romains", slug: "romains", nameEn: "Romans", slugEn: "romans", chapters: [32, 29, 31, 25, 21, 23, 25, 39, 33, 21, 36, 21, 14, 23, 33, 27] },
+    { name: "1 Corinthiens", slug: "1-corinthiens", nameEn: "1 Corinthians", slugEn: "1-corinthians", chapters: [31, 16, 23, 21, 13, 20, 40, 13, 27, 33, 34, 31, 13, 40, 58, 24] },
+    { name: "2 Corinthiens", slug: "2-corinthiens", nameEn: "2 Corinthians", slugEn: "2-corinthians", chapters: [24, 17, 18, 18, 21, 18, 16, 24, 15, 18, 33, 21, 14] },
+    { name: "Galates", slug: "galates", nameEn: "Galatians", slugEn: "galatians", chapters: [24, 21, 29, 31, 26, 18] },
+    { name: "Éphésiens", slug: "ephesiens", nameEn: "Ephesians", slugEn: "ephesians", chapters: [23, 22, 21, 32, 33, 24] },
+    { name: "Philippiens", slug: "philippiens", nameEn: "Philippians", slugEn: "philippians", chapters: [30, 30, 21, 23] },
+    { name: "Colossiens", slug: "colossiens", nameEn: "Colossians", slugEn: "colossians", chapters: [29, 23, 25, 18] },
+    { name: "1 Thessaloniciens", slug: "1-thessaloniciens", nameEn: "1 Thessalonians", slugEn: "1-thessalonians", chapters: [10, 20, 13, 18, 28] },
+    { name: "2 Thessaloniciens", slug: "2-thessaloniciens", nameEn: "2 Thessalonians", slugEn: "2-thessalonians", chapters: [12, 17, 18] },
+    { name: "1 Timothée", slug: "1-timothee", nameEn: "1 Timothy", slugEn: "1-timothy", chapters: [20, 15, 16, 16, 25, 21] },
+    { name: "2 Timothée", slug: "2-timothee", nameEn: "2 Timothy", slugEn: "2-timothy", chapters: [18, 26, 17, 22] },
+    { name: "Tite", slug: "tite", nameEn: "Titus", slugEn: "titus", chapters: [16, 15, 15] },
+    { name: "Philémon", slug: "philemon", nameEn: "Philemon", slugEn: "philemon", chapters: [25] },
+    { name: "Hébreux", slug: "hebreux", nameEn: "Hebrews", slugEn: "hebreux", chapters: [14, 18, 19, 16, 14, 20, 28, 13, 28, 39, 40, 29, 25] },
+    { name: "Jacques", slug: "jacques", nameEn: "James", slugEn: "james", chapters: [27, 26, 18, 17, 20] },
+    { name: "1 Pierre", slug: "1-pierre", nameEn: "1 Peter", slugEn: "1-peter", chapters: [25, 25, 22, 19, 14] },
+    { name: "2 Pierre", slug: "2-pierre", nameEn: "2 Peter", slugEn: "2-peter", chapters: [21, 22, 18] },
+    { name: "1 Jean", slug: "1-jean", nameEn: "1 John", slugEn: "1-john", chapters: [10, 29, 24, 21, 21] },
+    { name: "2 Jean", slug: "2-jean", nameEn: "2 John", slugEn: "2-john", chapters: [13] },
+    { name: "3 Jean", slug: "3-jean", nameEn: "3 John", slugEn: "3-john", chapters: [14] },
+    { name: "Jude", slug: "jude", nameEn: "Jude", slugEn: "jude", chapters: [25] },
+    { name: "Révélation", slug: "revelation", nameEn: "Revelation", slugEn: "revelation", chapters: [20, 29, 22, 11, 14, 17, 17, 13, 21, 11, 19, 17, 18, 20, 8, 21, 18, 24, 21, 15, 27, 21] }
+];
 
-  <!-- CORPS -->
-  <main>
-    <!-- FORMULAIRE -->
-    <aside>
-      <h2>Nouvelle transaction</h2>
-      <label>Description
-        <div class="autocomplete-wrap">
-          <input type="text" id="f-desc" autocomplete="off" placeholder="Ex: Épicerie…">
-          <ul id="suggestions"></ul>
+        document.addEventListener('DOMContentLoaded', () => {
+  const bookListContainer = document.getElementById('book-list');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  
+  const mainView = document.getElementById('main-view');
+  const bookView = document.getElementById('book-view');
+  const backButton = document.getElementById('back-button');
+  const prevBookBtn = document.getElementById('prev-book-btn');
+  const nextBookBtn = document.getElementById('next-book-btn');
+  const bookViewTitle = document.getElementById('book-view-title');
+  const bookViewProgressBar = document.getElementById('book-view-progress-bar');
+  const bookViewProgressText = document.getElementById('book-view-progress-text');
+  const bookPortionsGrid = document.getElementById('book-portions-grid');
+
+  const langEnBtn = document.getElementById('lang-en');
+  const langFrBtn = document.getElementById('lang-fr');
+  const hebrewTitle = document.getElementById('hebrew-title');
+  const greekTitle = document.getElementById('greek-title');
+  const themeToggleBtn = document.getElementById('theme-toggle');
+
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importFile = document.getElementById('import-file');
+
+  let currentBookIndex = -1;
+
+  // Configuration
+  // Pour une lecture en 3 ans (environ 1096 jours)
+  // Total versets Bible ~ 31,102
+  // 31,102 / 1096 = ~28.4 versets par jour
+  const TARGET_VERSES = 29; 
+
+  // Language Configuration
+  let currentLang = localStorage.getItem('bibleLang') || 'en';
+  
+  // Theme Configuration
+  let currentTheme = localStorage.getItem('bibleTheme') || 'light';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  updateThemeIcon();
+
+  const translations = {
+    en: {
+      hebrewTitle: "HEBREW-ARAMAIC SCRIPTURES",
+      greekTitle: "CHRISTIAN GREEK SCRIPTURES",
+      backButton: "← Back to list",
+      prevBook: "← Previous",
+      nextBook: "Next →",
+      read: "Read",
+      lastRead: "Last read",
+      portions: "portions",
+      readStatus: "read",
+      consecutive: "consecutive day",
+      consecutivePlural: "consecutive days",
+      chapter: "Ch.",
+      to: "-",
+      export: "⬇️ Export Data",
+      import: "⬆️ Import Data",
+      exportSuccess: "Data exported successfully!",
+      importSuccess: "Data imported successfully!",
+      importError: "Error importing data. Please check the file format."
+    },
+    fr: {
+      hebrewTitle: "ÉCRITURES HÉBRAÏQUES ET ARAMÉENNES",
+      greekTitle: "ÉCRITURES GRECQUES CHRÉTIENNES",
+      backButton: "← Retour à la liste",
+      prevBook: "← Précédent",
+      nextBook: "Suivant →",
+      read: "Lire",
+      lastRead: "Dernier lu",
+      portions: "portions",
+      readStatus: "lu",
+      consecutive: "jour consécutif",
+      consecutivePlural: "jours consécutifs",
+      chapter: "Ch.",
+      to: "-",
+      export: "⬇️ Sauvegarder (Export)",
+      import: "⬆️ Charger (Import)",
+      exportSuccess: "Données exportées avec succès !",
+      importSuccess: "Données importées avec succès !",
+      importError: "Erreur lors de l'importation. Vérifiez le format du fichier."
+    }
+  };
+
+  // Load saved progress
+  // Structure: { "bookSlug-portionIndex": "YYYY-MM-DD" or true (legacy) }
+  let savedProgress = {};
+  let lastReadBook = null;
+
+  function loadDataForCurrentLang() {
+    const progressKey = `bibleReadingProgress_${currentLang}`;
+    const lastReadKey = `lastReadBook_${currentLang}`;
+    
+    // Migration logic for FR (legacy data was stored without suffix)
+    if (currentLang === 'fr' && !localStorage.getItem(progressKey)) {
+        const legacyProgress = localStorage.getItem('bibleReadingProgress');
+        if (legacyProgress) {
+            localStorage.setItem(progressKey, legacyProgress);
+        }
+        const legacyLastRead = localStorage.getItem('lastReadBook');
+        if (legacyLastRead) {
+            localStorage.setItem(lastReadKey, legacyLastRead);
+        }
+    }
+
+    savedProgress = JSON.parse(localStorage.getItem(progressKey)) || {};
+    lastReadBook = localStorage.getItem(lastReadKey);
+  }
+
+  // Helper to get today's date string YYYY-MM-DD
+  function getTodayString() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  // Helper to calculate consecutive reading streak
+  function calculateStreak() {
+    const dates = Object.values(savedProgress)
+      .filter(val => typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}$/))
+      .sort();
+    
+    if (dates.length === 0) return 0;
+
+    const uniqueDates = [...new Set(dates)]; // Remove duplicates
+    const today = getTodayString();
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    
+    // Check if read today or yesterday to keep streak alive
+    const lastReadDate = uniqueDates[uniqueDates.length - 1];
+    if (lastReadDate !== today && lastReadDate !== yesterday) {
+        return 0;
+    }
+
+    let streak = 1;
+    let currentDate = new Date(lastReadDate);
+
+    for (let i = uniqueDates.length - 2; i >= 0; i--) {
+        const prevDate = new Date(uniqueDates[i]);
+        const diffTime = Math.abs(currentDate - prevDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        
+        if (diffDays === 1) {
+            streak++;
+            currentDate = prevDate;
+        } else {
+            break;
+        }
+    }
+    return streak;
+  }
+
+  // Helper to generate portions for a book
+  function generatePortions(book) {
+    const portions = [];
+    let currentPortion = {
+      startChapter: 1,
+      endChapter: 1,
+      startVerse: 1,
+      endVerse: 0, // Will be set dynamically
+      totalVerses: 0
+    };
+
+    book.chapters.forEach((verseCount, index) => {
+      const chapterNum = index + 1;
+      
+      // If a single chapter is way too long (more than 1.5x target), split it
+      if (verseCount > TARGET_VERSES * 1.5) {
+        // If we have accumulated verses in currentPortion, push them first
+        if (currentPortion.totalVerses > 0) {
+          currentPortion.endChapter = chapterNum - 1;
+          currentPortion.endVerse = book.chapters[index - 1]; // Last verse of prev chapter
+          portions.push({...currentPortion});
+          
+          // Reset for next
+          currentPortion = {
+            startChapter: chapterNum,
+            endChapter: chapterNum,
+            startVerse: 1,
+            endVerse: 0,
+            totalVerses: 0
+          };
+        }
+
+        // Split the long chapter
+        let versesRemaining = verseCount;
+        let currentVerse = 1;
+        
+        while (versesRemaining > 0) {
+          let versesInThisChunk = Math.min(versesRemaining, TARGET_VERSES);
+          
+          // Avoid leaving a tiny orphan chunk (e.g. 5 verses)
+          if (versesRemaining - versesInThisChunk < 20 && versesRemaining > TARGET_VERSES) {
+             versesInThisChunk = Math.ceil(versesRemaining / 2);
+          }
+
+          portions.push({
+            startChapter: chapterNum,
+            endChapter: chapterNum,
+            startVerse: currentVerse,
+            endVerse: Math.min(verseCount, currentVerse + versesInThisChunk - 1),
+            totalVerses: versesInThisChunk
+          });
+          
+          currentVerse += versesInThisChunk;
+          versesRemaining -= versesInThisChunk;
+        }
+        
+        // Prepare for next chapter
+        if (index < book.chapters.length - 1) {
+           currentPortion.startChapter = chapterNum + 1;
+           currentPortion.startVerse = 1;
+        }
+
+      } else {
+        // Normal accumulation
+        if (currentPortion.totalVerses + verseCount > TARGET_VERSES * 1.2) {
+          // If adding this chapter exceeds limit significantly, close current portion
+          currentPortion.endChapter = chapterNum - 1;
+          currentPortion.endVerse = book.chapters[index - 1];
+          portions.push({...currentPortion});
+          
+          // Start new portion with current chapter
+          currentPortion = {
+            startChapter: chapterNum,
+            endChapter: chapterNum,
+            startVerse: 1,
+            endVerse: verseCount,
+            totalVerses: verseCount
+          };
+        } else {
+          // Add to current portion
+          currentPortion.endChapter = chapterNum;
+          currentPortion.endVerse = verseCount;
+          currentPortion.totalVerses += verseCount;
+        }
+      }
+    });
+
+    // Push any remaining portion
+    if (currentPortion.totalVerses > 0) {
+      portions.push(currentPortion);
+    }
+
+    return portions;
+  }
+
+  function updateLanguageUI() {
+    const t = translations[currentLang];
+    
+    hebrewTitle.textContent = t.hebrewTitle;
+    greekTitle.textContent = t.greekTitle;
+    backButton.textContent = t.backButton;
+    prevBookBtn.textContent = t.prevBook;
+    nextBookBtn.textContent = t.nextBook;
+    
+    langEnBtn.classList.toggle('active', currentLang === 'en');
+    langFrBtn.classList.toggle('active', currentLang === 'fr');
+    
+    loadDataForCurrentLang();
+
+    // Re-render views to update content
+    if (mainView.style.display !== 'none') {
+        renderMainView();
+    } else {
+        if (currentBookIndex !== -1) {
+            showBookView(bibleData[currentBookIndex]);
+        }
+    }
+  }
+
+  function renderMainView() {
+    mainView.style.display = 'block';
+    bookView.style.display = 'none';
+    
+    const hebrewContainer = document.getElementById('hebrew-scriptures');
+    const greekContainer = document.getElementById('greek-scriptures');
+    hebrewContainer.innerHTML = '';
+    greekContainer.innerHTML = '';
+
+    let totalPortions = 0;
+    let completedPortions = 0;
+    const t = translations[currentLang];
+
+    bibleData.forEach((book, bookIndex) => {
+      const portions = generatePortions(book);
+      totalPortions += portions.length;
+
+      const bookCard = document.createElement('div');
+      bookCard.className = 'book-card';
+      bookCard.id = `book-card-${book.slug}`;
+      
+      // Calculate book progress
+      let bookCompleted = 0;
+      portions.forEach((p, pIndex) => {
+        const id = `${book.slug}-${pIndex}`;
+        if (savedProgress[id]) bookCompleted++;
+      });
+      completedPortions += bookCompleted;
+
+      // Check if this is the last read book
+      if (lastReadBook === book.slug) {
+          bookCard.classList.add('last-read');
+      }
+
+      const bookName = currentLang === 'en' ? book.nameEn : book.name;
+
+      const header = document.createElement('div');
+      header.className = 'book-header';
+      header.innerHTML = `
+        <span class="book-title">${bookName}</span>
+        <span class="book-progress" id="progress-${book.slug}">${bookCompleted}/${portions.length} ${t.portions}</span>
+        ${lastReadBook === book.slug ? `<span class="last-read-indicator">${t.lastRead}</span>` : ''}
+      `;
+      
+      // Click to navigate to book detail
+      header.addEventListener('click', () => {
+        showBookView(book);
+      });
+
+      bookCard.appendChild(header);
+
+      if (bookIndex < 39) {
+          hebrewContainer.appendChild(bookCard);
+      } else {
+          greekContainer.appendChild(bookCard);
+      }
+    });
+
+    updateGlobalProgress(completedPortions, totalPortions);
+    
+    // Scroll to last read book if it exists
+    if (lastReadBook) {
+        setTimeout(() => {
+            const element = document.getElementById(`book-card-${lastReadBook}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    }
+  }
+
+  function showBookView(book) {
+    mainView.style.display = 'none';
+    bookView.style.display = 'block';
+    
+    const t = translations[currentLang];
+
+    // Update current index and button states
+    currentBookIndex = bibleData.findIndex(b => b.slug === book.slug);
+    
+    prevBookBtn.disabled = currentBookIndex <= 0;
+    nextBookBtn.disabled = currentBookIndex >= bibleData.length - 1;
+    
+    prevBookBtn.style.opacity = prevBookBtn.disabled ? '0.5' : '1';
+    prevBookBtn.style.cursor = prevBookBtn.disabled ? 'default' : 'pointer';
+    nextBookBtn.style.opacity = nextBookBtn.disabled ? '0.5' : '1';
+    nextBookBtn.style.cursor = nextBookBtn.disabled ? 'default' : 'pointer';
+
+    const bookName = currentLang === 'en' ? book.nameEn : book.name;
+    bookViewTitle.textContent = bookName;
+    bookPortionsGrid.innerHTML = '';
+    
+    const portions = generatePortions(book);
+    let bookCompleted = 0;
+
+    portions.forEach((portion, index) => {
+      const portionId = `${book.slug}-${index}`;
+      const savedValue = savedProgress[portionId];
+      const isChecked = savedValue ? 'checked' : '';
+      
+      let completedDate = '';
+      if (savedValue === true) {
+          // Legacy data, no date
+      } else if (typeof savedValue === 'string') {
+          completedDate = savedValue;
+      }
+
+      if (savedValue) bookCompleted++;
+
+      const card = document.createElement('div');
+      card.className = 'portion-card';
+      
+      // Construct URL
+      let url = "";
+      if (currentLang === 'en') {
+        url = `https://www.jw.org/en/library/bible/study-bible/books/${book.slugEn}/${portion.startChapter}/`;
+      } else {
+        url = `https://www.jw.org/fr/biblioth%C3%A8que/bible/bible-d-etude/livres/${book.slug}/${portion.startChapter}/`;
+      }
+
+      let labelText = "";
+      if (portion.startChapter === portion.endChapter) {
+        if (portion.startVerse === 1 && portion.endVerse === book.chapters[portion.startChapter-1]) {
+           labelText = `${t.chapter} ${portion.startChapter}`;
+        } else {
+           labelText = `${t.chapter} ${portion.startChapter}:${portion.startVerse}-${portion.endVerse}`;
+        }
+      } else {
+        labelText = `${t.chapter} ${portion.startChapter}-${portion.endChapter}`;
+      }
+
+      card.innerHTML = `
+        <div class="portion-header">
+            <input type="checkbox" class="portion-checkbox-large" id="${portionId}" ${isChecked}>
+            <div class="portion-info">
+                <span class="portion-label ${isChecked ? 'completed' : ''}">${labelText}</span>
+                <span class="portion-date">${completedDate}</span>
+            </div>
         </div>
-      </label>
-      <label>Montant ($)<input type="number" id="f-montant" min="0.01" step="0.01" placeholder="0.00"></label>
-      <label>Date<input type="date" id="f-date"></label>
-      <label>Type
-        <div class="radio-group">
-          <label><input type="radio" name="type" value="entrée" checked> Entrée</label>
-          <label><input type="radio" name="type" value="sortie"> Sortie</label>
-        </div>
-      </label>
-      <label>Catégorie
-        <select id="f-cat">
-          <option>Salaire</option><option>Alimentation</option><option>Loyer</option>
-          <option>Transport</option><option>Loisirs</option><option>Santé</option>
-          <option>Épargne</option><option selected>Autre</option>
-        </select>
-      </label>
-      <button class="btn-add" onclick="ajouterTransaction()">➕ Ajouter</button>
+        <a href="${url}" target="_blank" class="portion-action-btn">${t.read}</a>
+      `;
+      
+      bookPortionsGrid.appendChild(card);
 
-      <hr>
-      <h2>📊 Relevé du mois</h2>
-      <div class="releve">
-        <span>Entrées du mois</span><span class="green" id="r-entrees">—</span>
-        <span>Sorties du mois</span><span class="red"   id="r-sorties">—</span>
-        <span>Solde du mois</span>  <span id="r-solde">—</span>
-        <span>Bilan</span>          <span id="r-bilan">—</span>
-      </div>
-    </aside>
+      // Event Listener
+      const checkbox = card.querySelector('input');
+      const label = card.querySelector('.portion-label');
+      const dateSpan = card.querySelector('.portion-date');
 
-    <!-- LISTE -->
-    <section class="liste">
-      <div class="filter-bar">
-        <span>Filtrer :</span>
-        <label><input type="radio" name="filtre" value="tous" checked onchange="rafraichir()"> Tous</label>
-        <label><input type="radio" name="filtre" value="entrée" onchange="rafraichir()"> Entrées</label>
-        <label><input type="radio" name="filtre" value="sortie" onchange="rafraichir()"> Sorties</label>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Date</th><th>Description</th><th>Catégorie</th><th>Type</th><th>Montant</th><th></th></tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+      checkbox.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          const today = getTodayString();
+          savedProgress[portionId] = today;
+          label.classList.add('completed');
+          dateSpan.textContent = today;
+          bookCompleted++;
+          
+          // Update last read book
+          lastReadBook = book.slug;
+          localStorage.setItem(`lastReadBook_${currentLang}`, lastReadBook);
+          
+        } else {
+          delete savedProgress[portionId];
+          label.classList.remove('completed');
+          dateSpan.textContent = '';
+          bookCompleted--;
+        }
+        localStorage.setItem(`bibleReadingProgress_${currentLang}`, JSON.stringify(savedProgress));
+        updateBookProgress(bookCompleted, portions.length);
+        
+        // Update global progress in real-time
+        let totalCompleted = 0;
+        let totalPortions = 0;
+        
+        bibleData.forEach(b => {
+            const p = generatePortions(b);
+            totalPortions += p.length;
+            p.forEach((_, idx) => {
+                if (savedProgress[`${b.slug}-${idx}`]) totalCompleted++;
+            });
+        });
+        
+        updateGlobalProgress(totalCompleted, totalPortions);
+      });
+    });
 
-  <!-- MODAL ÉDITION -->
-  <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="fermerModal(event)">
-    <div class="modal">
-      <h2>✏️ Modifier la transaction</h2>
-      <label>Description<input type="text" id="m-desc" autocomplete="off"></label>
-      <label>Montant ($)<input type="number" id="m-montant" min="0.01" step="0.01"></label>
-      <label>Date<input type="date" id="m-date"></label>
-      <label>Type
-        <div class="radio-group">
-          <label><input type="radio" name="m-type" value="entrée"> Entrée</label>
-          <label><input type="radio" name="m-type" value="sortie"> Sortie</label>
-        </div>
-      </label>
-      <label>Catégorie
-        <select id="m-cat">
-          <option>Salaire</option><option>Alimentation</option><option>Loyer</option>
-          <option>Transport</option><option>Loisirs</option><option>Santé</option>
-          <option>Épargne</option><option>Autre</option>
-        </select>
-      </label>
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="fermerModal()">Annuler</button>
-        <button class="btn-save"   onclick="sauvegarderModif()">💾 Sauvegarder</button>
-      </div>
-    </div>
-  </div>
+    updateBookProgress(bookCompleted, portions.length);
+    window.scrollTo(0, 0);
+  }
 
-  <script src="app.js"></script>
+  function updateGlobalProgress(completed, total) {
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const streak = calculateStreak();
+    const t = translations[currentLang];
+    const streakLabel = streak > 1 ? t.consecutivePlural : t.consecutive;
+
+    if(progressBar) progressBar.style.width = `${percentage}%`;
+    if(progressText) progressText.innerHTML = `${percentage}% ${t.readStatus} (${completed}/${total} ${t.portions}) <br> <span class="streak-text">🔥 ${streak} ${streakLabel}</span>`;
+  }
+
+  function updateBookProgress(completed, total) {
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const t = translations[currentLang];
+    if(bookViewProgressBar) bookViewProgressBar.style.width = `${percentage}%`;
+    if(bookViewProgressText) bookViewProgressText.textContent = `${percentage}% ${t.readStatus} (${completed}/${total} ${t.portions})`;
+  }
+
+  backButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    renderMainView();
+  });
+
+  prevBookBtn.addEventListener('click', () => {
+    if (currentBookIndex > 0) {
+        showBookView(bibleData[currentBookIndex - 1]);
+    }
+  });
+
+  nextBookBtn.addEventListener('click', () => {
+    if (currentBookIndex < bibleData.length - 1) {
+        showBookView(bibleData[currentBookIndex + 1]);
+    }
+  });
+
+  langEnBtn.addEventListener('click', () => {
+      if (currentLang !== 'en') {
+          currentLang = 'en';
+          localStorage.setItem('bibleLang', 'en');
+          updateLanguageUI();
+      }
+  });
+  
+  langFrBtn.addEventListener('click', () => {
+      if (currentLang !== 'fr') {
+          currentLang = 'fr';
+          localStorage.setItem('bibleLang', 'fr');
+          updateLanguageUI();
+      }
+  });
+
+  function updateThemeIcon() {
+    themeToggleBtn.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    themeToggleBtn.title = currentTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  }
+
+  themeToggleBtn.addEventListener('click', () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('bibleTheme', currentTheme);
+    updateThemeIcon();
+  });
+
+  // Export Functionality
+  exportBtn.addEventListener('click', () => {
+    const data = {
+      bibleReadingProgress_en: localStorage.getItem('bibleReadingProgress_en'),
+      bibleReadingProgress_fr: localStorage.getItem('bibleReadingProgress_fr'),
+      lastReadBook_en: localStorage.getItem('lastReadBook_en'),
+      lastReadBook_fr: localStorage.getItem('lastReadBook_fr'),
+      bibleLang: localStorage.getItem('bibleLang'),
+      bibleTheme: localStorage.getItem('bibleTheme'),
+      exportDate: new Date().toISOString()
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "bible_reading_backup_" + getTodayString() + ".json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+    
+    alert(translations[currentLang].exportSuccess);
+  });
+
+  // Import Functionality
+  importBtn.addEventListener('click', () => {
+    importFile.click();
+  });
+
+  importFile.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        
+        // Basic validation
+        if (data.exportDate) {
+          if (data.bibleReadingProgress_en) localStorage.setItem('bibleReadingProgress_en', data.bibleReadingProgress_en);
+          if (data.bibleReadingProgress_fr) localStorage.setItem('bibleReadingProgress_fr', data.bibleReadingProgress_fr);
+          if (data.lastReadBook_en) localStorage.setItem('lastReadBook_en', data.lastReadBook_en);
+          if (data.lastReadBook_fr) localStorage.setItem('lastReadBook_fr', data.lastReadBook_fr);
+          if (data.bibleLang) localStorage.setItem('bibleLang', data.bibleLang);
+          if (data.bibleTheme) localStorage.setItem('bibleTheme', data.bibleTheme);
+          
+          alert(translations[currentLang].importSuccess);
+          location.reload(); // Reload to apply changes
+        } else {
+          throw new Error("Invalid format");
+        }
+      } catch (error) {
+        console.error(error);
+        alert(translations[currentLang].importError);
+      }
+    };
+    reader.readAsText(file);
+    // Reset value so same file can be selected again if needed
+    importFile.value = '';
+  });
+
+  function updateLanguageUI() {
+    const t = translations[currentLang];
+    
+    hebrewTitle.textContent = t.hebrewTitle;
+    greekTitle.textContent = t.greekTitle;
+    backButton.textContent = t.backButton;
+    prevBookBtn.textContent = t.prevBook;
+    nextBookBtn.textContent = t.nextBook;
+    exportBtn.textContent = t.export;
+    importBtn.textContent = t.import;
+    
+    langEnBtn.classList.toggle('active', currentLang === 'en');
+    langFrBtn.classList.toggle('active', currentLang === 'fr');
+    
+    loadDataForCurrentLang();
+
+    // Re-render views to update content
+    if (mainView.style.display !== 'none') {
+        renderMainView();
+    } else {
+        if (currentBookIndex !== -1) {
+            showBookView(bibleData[currentBookIndex]);
+        }
+    }
+  }
+
+  // Initial render
+  updateLanguageUI();
+});
+    </script>
 </body>
 </html>
