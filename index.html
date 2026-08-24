@@ -1122,19 +1122,51 @@ p.subtitle {
 
     const fileName = "bible_reading_backup_" + getTodayString() + ".json";
     const jsonStr = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const blob = new Blob([jsonStr], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if (isIOS) {
-      // On iOS, open the file in a new tab — then use Safari's share button (⬆️) → Save to Files
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      alert(currentLang === 'fr'
-        ? "Dans l'onglet qui vient de s'ouvrir, appuie sur ⬆️ en bas de Safari, puis « Enregistrer dans Fichiers » pour choisir où sauvegarder."
-        : "In the tab that just opened, tap ⬆️ at the bottom of Safari, then \"Save to Files\" to choose where to save.");
+      // On iOS, show a modal with a real <a> link the user taps directly.
+      // A genuine tap on an <a> is the only reliable way to trigger Save to Files on iOS.
+      const isFr = currentLang === 'fr';
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--container-bg);color:var(--text-color);border-radius:14px;padding:24px;max-width:360px;width:100%;text-align:center;';
+      box.innerHTML = `
+        <p style="margin:0 0 8px;font-weight:bold;font-size:1.05em">${isFr ? 'Sauvegarder la sauvegarde' : 'Save backup file'}</p>
+        <p style="margin:0 0 20px;font-size:0.85em;color:var(--secondary-text)">
+          ${isFr
+            ? 'Appuie longuement sur le lien ci-dessous, puis choisis <b>« Télécharger le lien »</b> ou <b>« Ouvrir dans Fichiers »</b>.<br><br>Ou appuie normalement → puis ⬆️ → Enregistrer dans Fichiers.'
+            : 'Long-press the link below and choose <b>"Download Linked File"</b>.<br><br>Or tap it → then ⬆️ → Save to Files.'}
+        </p>
+        <a id="export-link" href="${url}" download="${fileName}"
+           style="display:inline-block;background:var(--primary-color);color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:0.95em;margin-bottom:16px;">
+          📄 ${fileName}
+        </a>
+        <br>
+        <button id="export-close" style="margin-top:4px;background:none;border:1px solid var(--border-color);color:var(--text-color);padding:8px 22px;border-radius:8px;cursor:pointer;font-size:0.9em;">
+          ${isFr ? 'Fermer' : 'Close'}
+        </button>
+      `;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      document.getElementById('export-close').addEventListener('click', () => {
+        overlay.remove();
+        URL.revokeObjectURL(url);
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.remove();
+          URL.revokeObjectURL(url);
+        }
+      });
     } else {
       const a = document.createElement('a');
       a.href = url;
