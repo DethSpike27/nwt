@@ -1256,7 +1256,9 @@ p.subtitle {
     if (lastReadEn) data.lastReadBook_en = lastReadEn;
     if (lastReadFr) data.lastReadBook_fr = lastReadFr;
     isSyncing = true;
-    fbUserRef.set(data).then(() => { isSyncing = false; });
+    fbUserRef.set(data)
+      .then(() => { isSyncing = false; alert('✅ Saved to Firebase!'); })
+      .catch((err) => { isSyncing = false; alert('❌ Firebase save error: ' + err.message); });
   }
 
   // Firebase: update the sign-in button based on auth state
@@ -1338,6 +1340,8 @@ p.subtitle {
                                  localStorage.getItem('bibleReadingProgress_fr'));
         if (hasLocalData) saveToFirebase();
       }
+    }, (err) => {
+      alert('Firebase listener error: ' + err.message);
     });
   });
 
