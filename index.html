@@ -1242,6 +1242,7 @@ p.subtitle {
 
   // Firebase: save current state to the database
   function saveToFirebase() {
+    alert('Debug: ' + (currentUser ? currentUser.email : 'PAS CONNECTÉ'));
     if (!currentUser) return;
     const progressEn = localStorage.getItem('bibleReadingProgress_en');
     const progressFr = localStorage.getItem('bibleReadingProgress_fr');
