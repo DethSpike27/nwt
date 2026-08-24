@@ -1109,7 +1109,7 @@ p.subtitle {
   });
 
   // Export Functionality
-  exportBtn.addEventListener('click', () => {
+  exportBtn.addEventListener('click', async () => {
     const data = {
       bibleReadingProgress_en: localStorage.getItem('bibleReadingProgress_en'),
       bibleReadingProgress_fr: localStorage.getItem('bibleReadingProgress_fr'),
@@ -1120,15 +1120,34 @@ p.subtitle {
       exportDate: new Date().toISOString()
     };
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "bible_reading_backup_" + getTodayString() + ".json");
-    document.body.appendChild(downloadAnchorNode); // required for firefox
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    
-    alert(translations[currentLang].exportSuccess);
+    const fileName = "bible_reading_backup_" + getTodayString() + ".json";
+    const jsonStr = JSON.stringify(data, null, 2);
+    const file = new File([jsonStr], fileName, { type: 'application/json' });
+
+    // Use Web Share API on iOS/mobile (opens native share sheet to choose destination)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'NWT Bible Reading Backup'
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+          alert(translations[currentLang].importError);
+        }
+      }
+    } else {
+      // Fallback for desktop browsers
+      const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(jsonStr);
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", fileName);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      alert(translations[currentLang].exportSuccess);
+    }
   });
 
   // Import Functionality
