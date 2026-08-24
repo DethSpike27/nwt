@@ -1242,7 +1242,6 @@ p.subtitle {
 
   // Firebase: save current state to the database
   function saveToFirebase() {
-    alert('Debug: ' + (currentUser ? currentUser.email : 'PAS CONNECTÉ'));
     if (!currentUser) return;
     const progressEn = localStorage.getItem('bibleReadingProgress_en');
     const progressFr = localStorage.getItem('bibleReadingProgress_fr');
@@ -1258,8 +1257,8 @@ p.subtitle {
     if (lastReadFr) data.lastReadBook_fr = lastReadFr;
     isSyncing = true;
     fbUserRef.set(data)
-      .then(() => { isSyncing = false; alert('✅ Saved to Firebase!'); })
-      .catch((err) => { isSyncing = false; alert('❌ Firebase save error: ' + err.message); });
+      .then(() => { isSyncing = false; })
+      .catch((err) => { isSyncing = false; console.error('Firebase save error:', err); });
   }
 
   // Firebase: update the sign-in button based on auth state
@@ -1278,30 +1277,18 @@ p.subtitle {
       authBtn.textContent = '🔑';
       authBtn.title = currentLang === 'fr' ? 'Se connecter avec Google' : 'Sign in with Google';
       authBtn.onclick = () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (isIOS) {
-          fbAuth.signInWithRedirect(provider);
-        } else {
-          fbAuth.signInWithPopup(provider).catch(err => {
-            if (err.code === 'auth/popup-blocked') {
-              fbAuth.signInWithRedirect(provider);
-            } else if (err.code !== 'auth/popup-closed-by-user') {
-              alert(currentLang === 'fr' ? 'Erreur de connexion' : 'Sign-in error');
-            }
-          });
-        }
+        fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
+          if (err.code === 'auth/popup-blocked') {
+            alert(currentLang === 'fr'
+              ? 'Autorise les popups pour ce site dans Safari (Réglages → Safari → Bloquer les fenêtres pop-up).'
+              : 'Allow popups for this site in Safari (Settings → Safari → Block Pop-ups).');
+          } else if (err.code !== 'auth/popup-closed-by-user') {
+            alert('Sign-in error: ' + err.message);
+          }
+        });
       };
     }
   }
-
-  // Handle result after signInWithRedirect (iOS)
-  fbAuth.getRedirectResult().catch(err => {
-    if (err.code && err.code !== 'auth/cancelled-popup-request') {
-      alert(currentLang === 'fr' ? 'Erreur de connexion' : 'Sign-in error');
-    }
-  });
 
   // Firebase: listen for sign-in/sign-out and sync data in real time
   fbAuth.onAuthStateChanged((user) => {
@@ -1342,7 +1329,7 @@ p.subtitle {
         if (hasLocalData) saveToFirebase();
       }
     }, (err) => {
-      alert('Firebase listener error: ' + err.message);
+      console.error('Firebase listener error:', err);
     });
   });
 
