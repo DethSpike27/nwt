@@ -440,6 +440,25 @@ p.subtitle {
   background-color: var(--nav-btn-hover);
 }
 
+.auth-btn {
+  background: none;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.auth-btn img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .container {
@@ -461,6 +480,9 @@ p.subtitle {
   }
 }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
@@ -472,6 +494,7 @@ p.subtitle {
                     <button id="lang-en" class="lang-btn active">EN</button>
                     <button id="lang-fr" class="lang-btn">FR</button>
                 </div>
+                <button id="auth-btn" class="auth-btn" title="Se connecter avec Google">🔑</button>
             </div>
         </header>
 
@@ -518,6 +541,19 @@ p.subtitle {
     </div>
 
     <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyDox_ubeadrNre6SxrV01puAbclH4tUORY",
+          authDomain: "nwt-bible-tracker.firebaseapp.com",
+          databaseURL: "https://nwt-bible-tracker-default-rtdb.firebaseio.com",
+          projectId: "nwt-bible-tracker",
+          storageBucket: "nwt-bible-tracker.firebasestorage.app",
+          messagingSenderId: "75223619206",
+          appId: "1:75223619206:web:31dc33ee7de61f6b04e307"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const fbAuth = firebase.auth();
+        const fbDb = firebase.database();
+
         const bibleData = [
     { name: "Genèse", slug: "genese", nameEn: "Genesis", slugEn: "genesis", chapters: [31, 25, 24, 26, 32, 22, 24, 22, 29, 32, 32, 20, 18, 24, 21, 16, 27, 33, 38, 18, 34, 24, 20, 67, 34, 35, 46, 22, 35, 43, 55, 32, 20, 31, 29, 43, 36, 30, 23, 23, 57, 38, 34, 34, 28, 34, 31, 22, 33, 26] },
     { name: "Exode", slug: "exode", nameEn: "Exodus", slugEn: "exodus", chapters: [22, 25, 22, 31, 23, 30, 25, 32, 35, 29, 10, 51, 22, 31, 27, 36, 16, 27, 25, 26, 36, 31, 33, 18, 40, 37, 21, 43, 46, 38, 18, 35, 23, 35, 35, 38, 29, 31, 43, 38] },
@@ -613,6 +649,8 @@ p.subtitle {
   const importFile = document.getElementById('import-file');
 
   let currentBookIndex = -1;
+  let currentUser = null;
+  const authBtn = document.getElementById('auth-btn');
 
   // Configuration
   // Pour une lecture en 3 ans (environ 1096 jours)
@@ -1024,6 +1062,7 @@ p.subtitle {
           bookCompleted--;
         }
         localStorage.setItem(`bibleReadingProgress_${currentLang}`, JSON.stringify(savedProgress));
+        saveToFirebase();
         updateBookProgress(bookCompleted, portions.length);
         
         // Update global progress in real-time
@@ -1084,6 +1123,7 @@ p.subtitle {
       if (currentLang !== 'en') {
           currentLang = 'en';
           localStorage.setItem('bibleLang', 'en');
+          saveToFirebase();
           updateLanguageUI();
       }
   });
@@ -1092,6 +1132,7 @@ p.subtitle {
       if (currentLang !== 'fr') {
           currentLang = 'fr';
           localStorage.setItem('bibleLang', 'fr');
+          saveToFirebase();
           updateLanguageUI();
       }
   });
@@ -1105,6 +1146,7 @@ p.subtitle {
     currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('bibleTheme', currentTheme);
+    saveToFirebase();
     updateThemeIcon();
   });
 
@@ -1194,6 +1236,99 @@ p.subtitle {
         }
     }
   }
+
+  // Firebase: save current state to the database
+  function saveToFirebase() {
+    if (!currentUser) return;
+    const progressEn = localStorage.getItem('bibleReadingProgress_en');
+    const progressFr = localStorage.getItem('bibleReadingProgress_fr');
+    const data = {
+      lang: localStorage.getItem('bibleLang') || 'en',
+      theme: localStorage.getItem('bibleTheme') || 'light'
+    };
+    if (progressEn) data.progress_en = JSON.parse(progressEn);
+    if (progressFr) data.progress_fr = JSON.parse(progressFr);
+    const lastReadEn = localStorage.getItem('lastReadBook_en');
+    const lastReadFr = localStorage.getItem('lastReadBook_fr');
+    if (lastReadEn) data.lastReadBook_en = lastReadEn;
+    if (lastReadFr) data.lastReadBook_fr = lastReadFr;
+    fbDb.ref(`users/${currentUser.uid}`).set(data);
+  }
+
+  // Firebase: update the sign-in button based on auth state
+  function updateAuthUI(user) {
+    if (user) {
+      const firstName = (user.displayName || '').split(' ')[0];
+      authBtn.innerHTML = user.photoURL
+        ? `<img src="${user.photoURL}"> ${firstName}`
+        : `👤 ${firstName}`;
+      authBtn.title = user.email;
+      authBtn.onclick = () => {
+        const msg = currentLang === 'fr' ? 'Se déconnecter ?' : 'Sign out?';
+        if (confirm(msg)) fbAuth.signOut();
+      };
+    } else {
+      authBtn.textContent = '🔑';
+      authBtn.title = currentLang === 'fr' ? 'Se connecter avec Google' : 'Sign in with Google';
+      authBtn.onclick = () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          fbAuth.signInWithRedirect(provider);
+        } else {
+          fbAuth.signInWithPopup(provider).catch(err => {
+            if (err.code === 'auth/popup-blocked') {
+              fbAuth.signInWithRedirect(provider);
+            } else if (err.code !== 'auth/popup-closed-by-user') {
+              alert(currentLang === 'fr' ? 'Erreur de connexion' : 'Sign-in error');
+            }
+          });
+        }
+      };
+    }
+  }
+
+  // Handle result after signInWithRedirect (iOS)
+  fbAuth.getRedirectResult().catch(err => {
+    if (err.code && err.code !== 'auth/cancelled-popup-request') {
+      alert(currentLang === 'fr' ? 'Erreur de connexion' : 'Sign-in error');
+    }
+  });
+
+  // Firebase: listen for sign-in/sign-out and sync data
+  fbAuth.onAuthStateChanged((user) => {
+    currentUser = user;
+    updateAuthUI(user);
+    if (!user) return;
+
+    fbDb.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+      const fbData = snapshot.val();
+      const hasFbData = fbData && (fbData.progress_en || fbData.progress_fr);
+      const hasLocalData = !!(localStorage.getItem('bibleReadingProgress_en') ||
+                               localStorage.getItem('bibleReadingProgress_fr'));
+
+      if (hasFbData) {
+        // Load Firebase data into localStorage and re-render
+        if (fbData.progress_en) localStorage.setItem('bibleReadingProgress_en', JSON.stringify(fbData.progress_en));
+        if (fbData.progress_fr) localStorage.setItem('bibleReadingProgress_fr', JSON.stringify(fbData.progress_fr));
+        if (fbData.lastReadBook_en) localStorage.setItem('lastReadBook_en', fbData.lastReadBook_en);
+        if (fbData.lastReadBook_fr) localStorage.setItem('lastReadBook_fr', fbData.lastReadBook_fr);
+        if (fbData.lang) { localStorage.setItem('bibleLang', fbData.lang); currentLang = fbData.lang; }
+        if (fbData.theme) {
+          localStorage.setItem('bibleTheme', fbData.theme);
+          currentTheme = fbData.theme;
+          document.documentElement.setAttribute('data-theme', currentTheme);
+          updateThemeIcon();
+        }
+        loadDataForCurrentLang();
+        updateLanguageUI();
+      } else if (hasLocalData) {
+        // No Firebase data yet — upload existing local data
+        saveToFirebase();
+      }
+    });
+  });
 
   // Initial render
   updateLanguageUI();
