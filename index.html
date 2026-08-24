@@ -1237,6 +1237,9 @@ p.subtitle {
     }
   }
 
+  let isSyncing = false;
+  let fbUserRef = null;
+
   // Firebase: save current state to the database
   function saveToFirebase() {
     if (!currentUser) return;
@@ -1252,7 +1255,8 @@ p.subtitle {
     const lastReadFr = localStorage.getItem('lastReadBook_fr');
     if (lastReadEn) data.lastReadBook_en = lastReadEn;
     if (lastReadFr) data.lastReadBook_fr = lastReadFr;
-    fbDb.ref(`users/${currentUser.uid}`).set(data);
+    isSyncing = true;
+    fbUserRef.set(data).then(() => { isSyncing = false; });
   }
 
   // Firebase: update the sign-in button based on auth state
@@ -1296,20 +1300,25 @@ p.subtitle {
     }
   });
 
-  // Firebase: listen for sign-in/sign-out and sync data
+  // Firebase: listen for sign-in/sign-out and sync data in real time
   fbAuth.onAuthStateChanged((user) => {
     currentUser = user;
     updateAuthUI(user);
-    if (!user) return;
 
-    fbDb.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+    if (!user) {
+      if (fbUserRef) { fbUserRef.off(); fbUserRef = null; }
+      return;
+    }
+
+    fbUserRef = fbDb.ref(`users/${user.uid}`);
+
+    fbUserRef.on('value', (snapshot) => {
+      // Skip re-render if we triggered this save ourselves
+      if (isSyncing) return;
+
       const fbData = snapshot.val();
-      const hasFbData = fbData && (fbData.progress_en || fbData.progress_fr);
-      const hasLocalData = !!(localStorage.getItem('bibleReadingProgress_en') ||
-                               localStorage.getItem('bibleReadingProgress_fr'));
-
-      if (hasFbData) {
-        // Load Firebase data into localStorage and re-render
+      if (fbData && (fbData.progress_en || fbData.progress_fr)) {
+        // Remote data received — apply to localStorage and re-render
         if (fbData.progress_en) localStorage.setItem('bibleReadingProgress_en', JSON.stringify(fbData.progress_en));
         if (fbData.progress_fr) localStorage.setItem('bibleReadingProgress_fr', JSON.stringify(fbData.progress_fr));
         if (fbData.lastReadBook_en) localStorage.setItem('lastReadBook_en', fbData.lastReadBook_en);
@@ -1323,9 +1332,11 @@ p.subtitle {
         }
         loadDataForCurrentLang();
         updateLanguageUI();
-      } else if (hasLocalData) {
-        // No Firebase data yet — upload existing local data
-        saveToFirebase();
+      } else {
+        // Firebase empty — upload local data if any
+        const hasLocalData = !!(localStorage.getItem('bibleReadingProgress_en') ||
+                                 localStorage.getItem('bibleReadingProgress_fr'));
+        if (hasLocalData) saveToFirebase();
       }
     });
   });
