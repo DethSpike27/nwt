@@ -1109,7 +1109,7 @@ p.subtitle {
   });
 
   // Export Functionality
-  exportBtn.addEventListener('click', async () => {
+  exportBtn.addEventListener('click', () => {
     const data = {
       bibleReadingProgress_en: localStorage.getItem('bibleReadingProgress_en'),
       bibleReadingProgress_fr: localStorage.getItem('bibleReadingProgress_fr'),
@@ -1122,32 +1122,26 @@ p.subtitle {
 
     const fileName = "bible_reading_backup_" + getTodayString() + ".json";
     const jsonStr = JSON.stringify(data, null, 2);
-    // Use octet-stream so iOS "Save to Files" works correctly
-    const file = new File([jsonStr], fileName, { type: 'application/octet-stream' });
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-    // Use Web Share API on iOS/mobile (opens native share sheet to choose destination)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: 'NWT Bible Reading Backup'
-        });
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error(err);
-          alert(translations[currentLang].importError);
-        }
-      }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isIOS) {
+      // On iOS, open the file in a new tab — then use Safari's share button (⬆️) → Save to Files
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      alert(currentLang === 'fr'
+        ? "Dans l'onglet qui vient de s'ouvrir, appuie sur ⬆️ en bas de Safari, puis « Enregistrer dans Fichiers » pour choisir où sauvegarder."
+        : "In the tab that just opened, tap ⬆️ at the bottom of Safari, then \"Save to Files\" to choose where to save.");
     } else {
-      // Fallback for desktop browsers — use blob URL (works better than data URL)
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", url);
-      downloadAnchorNode.setAttribute("download", fileName);
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
       alert(translations[currentLang].exportSuccess);
     }
