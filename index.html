@@ -1122,7 +1122,8 @@ p.subtitle {
 
     const fileName = "bible_reading_backup_" + getTodayString() + ".json";
     const jsonStr = JSON.stringify(data, null, 2);
-    const file = new File([jsonStr], fileName, { type: 'application/json' });
+    // Use octet-stream so iOS "Save to Files" works correctly
+    const file = new File([jsonStr], fileName, { type: 'application/octet-stream' });
 
     // Use Web Share API on iOS/mobile (opens native share sheet to choose destination)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1138,14 +1139,16 @@ p.subtitle {
         }
       }
     } else {
-      // Fallback for desktop browsers
-      const dataStr = "data:application/json;charset=utf-8," + encodeURIComponent(jsonStr);
+      // Fallback for desktop browsers — use blob URL (works better than data URL)
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
       const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("href", url);
       downloadAnchorNode.setAttribute("download", fileName);
       document.body.appendChild(downloadAnchorNode);
       downloadAnchorNode.click();
       downloadAnchorNode.remove();
+      URL.revokeObjectURL(url);
       alert(translations[currentLang].exportSuccess);
     }
   });
