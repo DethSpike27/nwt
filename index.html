@@ -1062,7 +1062,15 @@ p.subtitle {
           bookCompleted--;
         }
         localStorage.setItem(`bibleReadingProgress_${currentLang}`, JSON.stringify(savedProgress));
-        saveToFirebase();
+        if (currentUser) {
+          const fbPath = `progress_${currentLang}/${portionId}`;
+          syncingCount++;
+          (e.target.checked
+            ? fbUserRef.child(fbPath).set(savedProgress[portionId])
+            : fbUserRef.child(fbPath).remove())
+            .then(() => { syncingCount--; })
+            .catch(() => { syncingCount--; });
+        }
         updateBookProgress(bookCompleted, portions.length);
         
         // Update global progress in real-time
@@ -1237,7 +1245,7 @@ p.subtitle {
     }
   }
 
-  let isSyncing = false;
+  let syncingCount = 0;
   let fbUserRef = null;
 
   // Firebase: save current state to the database
@@ -1255,10 +1263,10 @@ p.subtitle {
     const lastReadFr = localStorage.getItem('lastReadBook_fr');
     if (lastReadEn) data.lastReadBook_en = lastReadEn;
     if (lastReadFr) data.lastReadBook_fr = lastReadFr;
-    isSyncing = true;
+    syncingCount++;
     fbUserRef.set(data)
-      .then(() => { isSyncing = false; })
-      .catch((err) => { isSyncing = false; console.error('Firebase save error:', err); });
+      .then(() => { syncingCount--; })
+      .catch((err) => { syncingCount--; console.error('Firebase save error:', err); });
   }
 
   // Firebase: update the sign-in button based on auth state
@@ -1304,7 +1312,7 @@ p.subtitle {
 
     fbUserRef.on('value', (snapshot) => {
       // Skip re-render if we triggered this save ourselves
-      if (isSyncing) return;
+      if (syncingCount > 0) return;
 
       const fbData = snapshot.val();
       if (fbData && (fbData.progress_en || fbData.progress_fr)) {
