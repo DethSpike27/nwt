@@ -1315,10 +1315,33 @@ p.subtitle {
       if (syncingCount > 0) return;
 
       const fbData = snapshot.val();
-      if (fbData && (fbData.progress_en || fbData.progress_fr)) {
-        // Remote data received — apply to localStorage and re-render
-        if (fbData.progress_en) localStorage.setItem('bibleReadingProgress_en', JSON.stringify(fbData.progress_en));
-        if (fbData.progress_fr) localStorage.setItem('bibleReadingProgress_fr', JSON.stringify(fbData.progress_fr));
+      const localEnRaw = localStorage.getItem('bibleReadingProgress_en');
+      const localFrRaw = localStorage.getItem('bibleReadingProgress_fr');
+      const hasRemote = !!(fbData && (fbData.progress_en || fbData.progress_fr));
+      const hasLocal = !!(localEnRaw || localFrRaw);
+
+      if (!hasRemote && !hasLocal) return;
+
+      let needsPush = false;
+
+      if (hasRemote) {
+        // Merge remote + local: union of checked items so no progress is ever lost
+        if (fbData.progress_en) {
+          const local = localEnRaw ? JSON.parse(localEnRaw) : {};
+          const merged = Object.assign({}, fbData.progress_en, local);
+          if (Object.keys(local).some(k => !(k in fbData.progress_en))) needsPush = true;
+          localStorage.setItem('bibleReadingProgress_en', JSON.stringify(merged));
+        } else if (localEnRaw) {
+          needsPush = true;
+        }
+        if (fbData.progress_fr) {
+          const local = localFrRaw ? JSON.parse(localFrRaw) : {};
+          const merged = Object.assign({}, fbData.progress_fr, local);
+          if (Object.keys(local).some(k => !(k in fbData.progress_fr))) needsPush = true;
+          localStorage.setItem('bibleReadingProgress_fr', JSON.stringify(merged));
+        } else if (localFrRaw) {
+          needsPush = true;
+        }
         if (fbData.lastReadBook_en) localStorage.setItem('lastReadBook_en', fbData.lastReadBook_en);
         if (fbData.lastReadBook_fr) localStorage.setItem('lastReadBook_fr', fbData.lastReadBook_fr);
         if (fbData.lang) { localStorage.setItem('bibleLang', fbData.lang); currentLang = fbData.lang; }
@@ -1330,11 +1353,10 @@ p.subtitle {
         }
         loadDataForCurrentLang();
         updateLanguageUI();
+        if (needsPush) saveToFirebase(); // push merged data back to Firebase
       } else {
-        // Firebase empty — upload local data if any
-        const hasLocalData = !!(localStorage.getItem('bibleReadingProgress_en') ||
-                                 localStorage.getItem('bibleReadingProgress_fr'));
-        if (hasLocalData) saveToFirebase();
+        // Firebase empty — push all local data
+        saveToFirebase();
       }
     }, (err) => {
       console.error('Firebase listener error:', err);
