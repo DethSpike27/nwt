@@ -458,6 +458,12 @@ p.subtitle {
   height: 20px;
   border-radius: 50%;
 }
+.sync-label {
+  font-size: 0.68em;
+  color: var(--text-secondary, #888);
+  white-space: nowrap;
+  opacity: 0.8;
+}
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
@@ -494,6 +500,7 @@ p.subtitle {
                     <button id="lang-en" class="lang-btn active">EN</button>
                     <button id="lang-fr" class="lang-btn">FR</button>
                 </div>
+                <span id="sync-label" class="sync-label"></span>
                 <button id="auth-btn" class="auth-btn" title="Se connecter avec Google">🔑</button>
             </div>
         </header>
@@ -1065,10 +1072,17 @@ p.subtitle {
         if (currentUser) {
           const fbPath = `progress_${currentLang}/${portionId}`;
           syncingCount++;
+          const nowIso = new Date().toISOString();
           (e.target.checked
             ? fbUserRef.child(fbPath).set(savedProgress[portionId])
             : fbUserRef.child(fbPath).remove())
-            .then(() => { syncingCount--; })
+            .then(() => {
+              syncingCount--;
+              syncingCount++;
+              fbUserRef.child('lastModified').set(nowIso)
+                .then(() => { syncingCount--; updateSyncIndicator(nowIso); })
+                .catch(() => { syncingCount--; });
+            })
             .catch(() => { syncingCount--; });
         }
         updateBookProgress(bookCompleted, portions.length);
@@ -1247,6 +1261,19 @@ p.subtitle {
 
   let syncingCount = 0;
   let fbUserRef = null;
+  const syncLabel = document.getElementById('sync-label');
+
+  function updateSyncIndicator(isoDate) {
+    if (!syncLabel || !isoDate) return;
+    const diff = Math.floor((Date.now() - new Date(isoDate)) / 86400000);
+    const fr = currentLang === 'fr';
+    let text;
+    if (diff === 0) text = fr ? "sync : aujourd'hui" : "sync: today";
+    else if (diff === 1) text = fr ? "sync : hier" : "sync: yesterday";
+    else text = fr ? `sync : il y a ${diff} j` : `sync: ${diff}d ago`;
+    syncLabel.textContent = text;
+    syncLabel.title = new Date(isoDate).toLocaleString();
+  }
 
   // Firebase: save current state to the database
   function saveToFirebase() {
@@ -1255,7 +1282,8 @@ p.subtitle {
     const progressFr = localStorage.getItem('bibleReadingProgress_fr');
     const data = {
       lang: localStorage.getItem('bibleLang') || 'en',
-      theme: localStorage.getItem('bibleTheme') || 'light'
+      theme: localStorage.getItem('bibleTheme') || 'light',
+      lastModified: new Date().toISOString()
     };
     if (progressEn) data.progress_en = JSON.parse(progressEn);
     if (progressFr) data.progress_fr = JSON.parse(progressFr);
@@ -1265,7 +1293,7 @@ p.subtitle {
     if (lastReadFr) data.lastReadBook_fr = lastReadFr;
     syncingCount++;
     fbUserRef.set(data)
-      .then(() => { syncingCount--; })
+      .then(() => { syncingCount--; updateSyncIndicator(data.lastModified); })
       .catch((err) => { syncingCount--; console.error('Firebase save error:', err); });
   }
 
@@ -1315,6 +1343,7 @@ p.subtitle {
       if (syncingCount > 0) return;
 
       const fbData = snapshot.val();
+      if (fbData && fbData.lastModified) updateSyncIndicator(fbData.lastModified);
       const localEnRaw = localStorage.getItem('bibleReadingProgress_en');
       const localFrRaw = localStorage.getItem('bibleReadingProgress_fr');
       const hasRemote = !!(fbData && (fbData.progress_en || fbData.progress_fr));
